@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <name>im.predictablepinyin.PredictablePinyin</name>
+  <description>Predictable Pinyin input method</description>
+  <exec>@IBUS_ENGINE_EXEC_PATH@ --ibus</exec>
+  <version>1.0.0</version>
+  <author>Pony AI Inc.</author>
+  <license>Apache-2.0</license>
+  <homepage>https://github.com/user/pinyin</homepage>
+  <textdomain>predictable-pinyin</textdomain>
+  <engines>
+    <engine>
+      <name>predictable-pinyin</name>
+      <language>zh_CN</language>
+      <license>Apache-2.0</license>
+      <author>Pony AI Inc.</author>
+      <icon>@IBUS_PP_ICON_PATH@</icon>
+      <layout>default</layout>
+      <longname>Predictable Pinyin</longname>
+      <description>Predictable Pinyin 霹雳拼音</description>
+      <rank>80</rank>
+      <symbol>霹</symbol>
+    </engine>
+  </engines>
+</component>

@@ -1,0 +1,16 @@
+env.sh
+build/
+.cache/
+_CPack_Packages/
+Testing/
+*.deb
+*.base64.sh
+
+# Downloaded data files (fetched by scripts/download-data.sh)
+data/raw/hanzi_db.csv
+data/raw/stroke.dict.yaml
+data/raw/pinyin_simp.dict.yaml
+
+# Dart tooling for scripts/
+scripts/.dart_tool/
+scripts/.packages

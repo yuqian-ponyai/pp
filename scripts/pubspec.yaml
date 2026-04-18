@@ -1,0 +1,6 @@
+name: pinyin_scripts
+description: Local data-preparation scripts for predictable-pinyin.
+publish_to: none
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"

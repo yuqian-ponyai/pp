@@ -1,0 +1,1 @@
+**ALWAYS RESPECT "LLM agents" SECTION IN README.md**
