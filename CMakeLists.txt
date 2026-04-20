@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 
+# macOS deployment target must be set BEFORE project() so the compiler picks
+# it up. We pin to 13.0 to match the LSMinimumSystemVersion in
+# data/macos/Info.plist.in. Without this, the binary bakes in whatever the
+# current SDK targets (e.g. macOS 26 on Tahoe), which makes Text Input
+# Services treat the bundle as version-mismatched and silently refuses to
+# enumerate it in System Settings → Keyboard → Input Sources.
+if(APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "macOS deployment target")
+endif()
+
 project(predictable_pinyin VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -39,7 +49,7 @@ target_include_directories(pp_core
 )
 
 target_compile_options(pp_core PRIVATE ${RIME_CFLAGS_OTHER})
-target_link_directories(pp_core PRIVATE ${RIME_LIBRARY_DIRS})
+target_link_directories(pp_core PUBLIC ${RIME_LIBRARY_DIRS})
 target_link_libraries(pp_core PUBLIC ${RIME_LIBRARIES})
 
 add_executable(predictable_pinyin_cli src/main.cc)
@@ -58,8 +68,11 @@ add_executable(pp_core_tests
   src/pinyin_trie.cc
   src/stroke_filter.cc
 )
-target_include_directories(pp_core_tests PRIVATE "${PROJECT_SOURCE_DIR}/src")
-target_link_libraries(pp_core_tests PRIVATE Catch2::Catch2WithMain)
+target_include_directories(pp_core_tests PRIVATE
+  "${PROJECT_SOURCE_DIR}/src"
+  ${RIME_INCLUDE_DIRS})
+target_link_directories(pp_core_tests PRIVATE ${RIME_LIBRARY_DIRS})
+target_link_libraries(pp_core_tests PRIVATE Catch2::Catch2WithMain ${RIME_LIBRARIES})
 
 if(BUILD_TESTING)
   set(PARSE_CATCH_TESTS_ADD_TARGET_IN_TEST_NAME OFF)
@@ -121,6 +134,61 @@ if(IBUS_FOUND)
           COMPONENT ibus)
 else()
   message(STATUS "libibus-1.0-dev not found: skipping ibus target")
+endif()
+
+# --- macOS input method (optional) ------------------------------------------
+
+if(APPLE)
+  find_library(INPUT_METHOD_KIT_FRAMEWORK InputMethodKit REQUIRED)
+  find_library(APPKIT_FRAMEWORK AppKit REQUIRED)
+  find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+  find_library(CARBON_FRAMEWORK Carbon REQUIRED)
+
+  set(MACOS_APP_NAME "PredictablePinyin")
+  configure_file(
+    data/macos/Info.plist.in
+    "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+    @ONLY)
+
+  add_executable(${MACOS_APP_NAME} MACOSX_BUNDLE src/macos_plugin.mm)
+  set_source_files_properties(src/macos_plugin.mm PROPERTIES
+    COMPILE_FLAGS "-fobjc-arc")
+  target_link_libraries(${MACOS_APP_NAME}
+    PRIVATE pp_core
+      ${INPUT_METHOD_KIT_FRAMEWORK}
+      ${APPKIT_FRAMEWORK}
+      ${FOUNDATION_FRAMEWORK}
+      ${CARBON_FRAMEWORK})
+  set_target_properties(${MACOS_APP_NAME} PROPERTIES
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+    MACOSX_BUNDLE_BUNDLE_NAME "${MACOS_APP_NAME}"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "im.predictablepinyin.inputmethod.PredictablePinyin")
+
+  # Stage data files into the bundle at build time so ./build/<app>.app is
+  # directly runnable without a separate install step.
+  set(_pp_bundle_ss
+    "$<TARGET_BUNDLE_CONTENT_DIR:${MACOS_APP_NAME}>/SharedSupport")
+  set(_pp_bundle_res
+    "$<TARGET_BUNDLE_CONTENT_DIR:${MACOS_APP_NAME}>/Resources")
+  add_custom_command(TARGET ${MACOS_APP_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${_pp_bundle_ss}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${_pp_bundle_res}"
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_SOURCE_DIR}/data/raw/stroke.dict.yaml"
+      "${CMAKE_SOURCE_DIR}/data/raw/hanzi_db.csv"
+      "${CMAKE_SOURCE_DIR}/data/raw/pinyin_simp.prism.txt"
+      "${CMAKE_SOURCE_DIR}/data/raw/pinyin_simp.dict.yaml"
+      "${CMAKE_SOURCE_DIR}/rime/predictable_pinyin.schema.yaml"
+      "${CMAKE_SOURCE_DIR}/data/macos/default.yaml"
+      "${CMAKE_SOURCE_DIR}/data/macos/symbols.yaml"
+      "${CMAKE_SOURCE_DIR}/data/macos/stroke.schema.yaml"
+      "${_pp_bundle_ss}/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_SOURCE_DIR}/data/macos/PredictablePinyin.icns"
+      "${_pp_bundle_res}/PredictablePinyin.icns"
+    VERBATIM)
 endif()
 
 # --- license/notice files ----------------------------------------------------

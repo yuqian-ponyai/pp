@@ -14,7 +14,7 @@ FILES=(
   "https://raw.githubusercontent.com/ruddfawcett/hanziDB.csv/master/hanzi_db.csv"
 
   "pinyin_simp.dict.yaml"
-  "990bca55d2e175940501ee96534451810ceb6a5d532d25e5b9e8456713469bad"
+  "e341598343a0f0f2035bb1aafc34a7f3bb7887deeecb3f60796262aaa2983e6b"
   "https://raw.githubusercontent.com/rime/rime-pinyin-simp/master/pinyin_simp.dict.yaml"
 )
 

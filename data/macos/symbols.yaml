@@ -1,0 +1,16 @@
+# Minimal symbols preset. Referenced by predictable_pinyin.schema.yaml via
+# `punctuator: import_preset: symbols`. We deliberately leave the maps
+# empty: PredictableStateMachine handles punctuation itself (see
+# HandlePunctuation in src/predictable_state_machine.cc), so Rime's
+# punctuator should not produce candidates of its own.
+config_version: "0.40"
+
+punctuator:
+  import_preset: default
+  symbols: {}
+
+# Required by Rime's loader when this file is named like a "preset" and
+# the punctuator imports the default punctuation tables.
+punctuation:
+  half_shape: {}
+  full_shape: {}

@@ -73,6 +73,7 @@ larger tasks. LLM agents should also follow all instructions in [LLM agents](#ll
 
 - Docs index: [`doc/README.md`](doc/README.md)
 - Linux ibus plan: [`doc/phase-8-ibus-linux-plan.md`](doc/phase-8-ibus-linux-plan.md)
+- macOS plan: [`doc/phase-8-macos-plan.md`](doc/phase-8-macos-plan.md)
 
 ## Development
 
@@ -87,6 +88,9 @@ larger tasks. LLM agents should also follow all instructions in [LLM agents](#ll
 # Linux (Ubuntu/Debian) — core + ibus
 sudo apt-get install -y librime-dev librime-data-luna-pinyin librime-data-stroke \
   librime-data-pinyin-simp libibus-1.0-dev
+
+# macOS — core + IMK input method
+brew install librime pkgconf cmake
 ```
 
 If cmake fails with "Could not find CMAKE_ROOT", create a local `env.sh`
@@ -156,6 +160,25 @@ The script builds the project, runs `sudo cmake --install`, deploys the Rime
 schema, and restarts the input method framework. Matching uninstall script:
 
 - **ibus**: `./scripts/uninstall-ibus.sh`
+
+### macOS Deployment
+
+Setup, install, and troubleshooting instructions:
+[`doc/dev-setup-macos.md`](doc/dev-setup-macos.md).
+
+```bash
+./scripts/install-macos.sh     # build + copy .app to ~/Library/Input Methods/
+./scripts/uninstall-macos.sh   # remove the installed .app
+./scripts/build-dmg.sh         # build/PredictablePinyin.dmg
+```
+
+`install-macos.sh` builds the `PredictablePinyin.app` bundle via CMake, ad-hoc
+signs it, copies it to `~/Library/Input Methods/` (no sudo, no Apple Developer
+Program required), seeds `~/Library/Rime/`, runs `rime_deployer` against the
+bundle's `SharedSupport/` directory, then `open`s the bundle and calls
+`TISRegisterInputSource()` / `TISEnableInputSource()` so it shows up in the
+input-source picker immediately. After install, confirm under
+System Settings → Keyboard → Input Sources → + → Chinese (Simplified).
 
 Installed data:
 

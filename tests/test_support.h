@@ -94,8 +94,9 @@ class ScopedDirectoryCleanup {
 };
 
 inline std::filesystem::path WriteSamplePrism() {
-  const auto timestamp =
-      std::to_string(std::filesystem::file_time_type::clock::now().time_since_epoch().count());
+  const auto timestamp = std::to_string(
+      static_cast<long long>(
+          std::filesystem::file_time_type::clock::now().time_since_epoch().count()));
   const std::filesystem::path dir =
       std::filesystem::temp_directory_path() / ("predictable_pinyin_tests_" + timestamp);
   std::filesystem::create_directories(dir);

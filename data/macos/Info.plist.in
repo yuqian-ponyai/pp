@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleDisplayName</key>
+  <string>Predictable Pinyin</string>
+  <key>CFBundleExecutable</key>
+  <string>@MACOS_APP_NAME@</string>
+  <key>CFBundleIconFile</key>
+  <string>PredictablePinyin.icns</string>
+  <key>CFBundleIdentifier</key>
+  <string>im.predictablepinyin.inputmethod.PredictablePinyin</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>Predictable Pinyin</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>@PROJECT_VERSION@</string>
+  <key>CFBundleVersion</key>
+  <string>@PROJECT_VERSION@</string>
+  <key>LSBackgroundOnly</key>
+  <true/>
+  <key>NSHumanReadableCopyright</key>
+  <string>Apache-2.0</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>InputMethodConnectionName</key>
+  <string>im.predictablepinyin.inputmethod.PredictablePinyin_Connection</string>
+  <key>InputMethodServerControllerClass</key>
+  <string>PPInputController</string>
+  <key>InputMethodServerDelegateClass</key>
+  <string>PPInputController</string>
+  <key>tsInputMethodCharacterRepertoireKey</key>
+  <array>
+    <string>Hans</string>
+  </array>
+  <key>tsInputMethodIconFileKey</key>
+  <string>PredictablePinyin.icns</string>
+  <key>ComponentInputModeDict</key>
+  <dict>
+    <key>tsInputModeListKey</key>
+    <dict>
+      <key>im.predictablepinyin.inputmethod.PredictablePinyin</key>
+      <dict>
+        <key>TISIntendedLanguage</key>
+        <string>zh-Hans</string>
+        <key>tsInputModeAlternateMenuIconFileKey</key>
+        <string>PredictablePinyin.icns</string>
+        <key>tsInputModeIconFileKey</key>
+        <string>PredictablePinyin.icns</string>
+        <key>tsInputModeMenuIconFileKey</key>
+        <string>PredictablePinyin.icns</string>
+        <key>tsInputModePaletteIconFileKey</key>
+        <string>PredictablePinyin.icns</string>
+      </dict>
+    </dict>
+  </dict>
+</dict>
+</plist>

@@ -1,0 +1,32 @@
+# Minimal Rime default.yaml shipped inside PredictablePinyin.app/Contents/
+# SharedSupport. Without a base default.yaml, Rime's `default.custom.yaml`
+# patch has nothing to apply to and deploy ends with "schema list not
+# defined", leaving ~/Library/Rime/build/ empty and Rime producing no
+# candidates.
+#
+# We list only `predictable_pinyin` because it's the only schema we ship.
+# The other sections (key_binder, recognizer, menu) are referenced by our
+# schema via `import_preset: default`.
+
+config_version: "0.40"
+
+schema_list:
+  - schema: predictable_pinyin
+
+menu:
+  page_size: 9
+
+# Referenced by schema's `key_binder: import_preset: default`. We supply
+# a minimal set; the state machine drives most key handling itself.
+key_binder:
+  bindings:
+    - { when: paging,    accept: comma,    send: Page_Up }
+    - { when: has_menu,  accept: period,   send: Page_Down }
+
+# Referenced by schema's `recognizer: import_preset: default`. The schema
+# adds its own patterns on top.
+recognizer:
+  patterns:
+    email: "^[A-Za-z][-_.0-9A-Za-z]*@.*$"
+    uppercase: "[A-Z][-_+.0-9A-Za-z]*$"
+    url: "^(www[.]|https?:|ftp[.:]|mailto:|file:).*$|^[a-z]+[.].+$"

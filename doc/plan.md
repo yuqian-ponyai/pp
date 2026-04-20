@@ -150,7 +150,7 @@ Estimated effort: 2-3 days
 
 Tasks:
 1. ✅ Linux (ibus): standalone engine executable — see [phase-8-ibus-linux-plan.md](./phase-8-ibus-linux-plan.md)
-2. Squirrel (macOS) with custom components
+2. ✅ macOS (IMK `.app` bundle) — see [phase-8-macos-plan.md](./phase-8-macos-plan.md)
 3. Weasel (Windows) with custom components
 4. Create build instructions and CI for each platform
 5. Provide pre-built binaries or installation packages
@@ -159,6 +159,7 @@ Estimated effort: 2-3 days per platform
 
 Detailed planning:
 - ibus: [phase-8-ibus-linux-plan.md](./phase-8-ibus-linux-plan.md)
+- macOS: [phase-8-macos-plan.md](./phase-8-macos-plan.md)
 
 ## Open Design Questions
 
@@ -223,11 +224,11 @@ Consider adding a "training mode" that shows extra hints.
 | Phase 5: Candidate Sorting | ✅ done | 2026-03-20 |
 | Phase 6: Selection Nav | ✅ done | 2026-03-20 |
 | Phase 7: Polish & Testing | ✅ done | 2026-03-20 |
-| Phase 8: Cross-Platform | Linux ibus done; macOS/Windows pending | started 2026-03-20 |
+| Phase 8: Cross-Platform | Linux ibus + macOS done; Windows pending | started 2026-03-20 |
 | Word Input | ✅ done | 2026-03-23 |
 
-Phases 1-7 completed in 2 days. Phase 8 is partially complete: Linux ibus is
-implemented, while macOS and Windows remain. Word input with per-character
+Phases 1-7 completed in 2 days. Phase 8 is partially complete: Linux ibus and
+macOS are implemented, while Windows remains. Word input with per-character
 stroke narrowing via multiple `;` is implemented.
 
 ## References

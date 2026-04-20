@@ -9,6 +9,7 @@ pieces so that pure logic can be tested without needing a live `librime` session
 |------|----------------|
 | `main.cc` | CLI harness: parses token args, creates session + machine, prints snapshots |
 | `ibus_plugin.cc` | ibus engine: standalone executable with GObject/D-Bus bridge to the state machine; passes through Ctrl/Alt combos; Shift toggles Chinese/English mode with IBusProperty indicator |
+| `macos_plugin.mm` | macOS input method: `IMKInputController` subclass + `NSApplicationMain` bridge to the state machine (Objective-C++, ARC); key translation via `NSEvent.charactersIgnoringModifiers` + `keyCode`; passes through Ctrl/Alt/Cmd combos; Shift toggles Chinese/English mode |
 | `pinyin_trie.h/.cc` | Loads canonical pinyin syllables from `pinyin_simp.prism.txt`; provides syllable validation (auto-end is informational only); `Decompose` splits multi-syllable pinyin into individual syllables for virtual word composition |
 | `rime_session.h/.cc` | Minimal wrapper around the `librime` C API for key input, candidate snapshots, and commits |
 | `predictable_state_machine.h/.cc` | Core state machine: pinyin → stroke → selecting phases, hints, undo/backspace; apostrophe syllable separator; exact stroke match priority; partial commit with continuation to remaining pinyin |
