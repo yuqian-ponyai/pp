@@ -19,13 +19,13 @@ time—especially for characters buried deep in the candidate list.
    use `'` (apostrophe) to separate syllables when needed (e.g., `ni'ao` for 尼奥
    vs `niao` which only matches single-syllable 鸟)
 2. then input `;` to enter the stroke phase (or SPACE to commit the top candidate directly)
-3. then input as many strokes as needed using h, s, p, n, d, t, z
+3. then input as many strokes as needed using h, s, p, n, d, z
    - h: 横 (horizontal stroke `—`)
    - s: 竖 (vertical stroke `丨`)
    - p: 撇 (left-falling stroke `/`)
    - n: 捺 (right-falling stroke `\`)
-   - d: 点 (dot stroke `丶`)
-   - t: 提 (rising/hook stroke `㇀`)
+   - d: 点 (dot stroke `丶`; 提/挑 rising hooks fold in here too — they're
+        hard to distinguish from 点 at a glance, so we pick the easier key)
    - z: 折 (turning/hook stroke `㇠`)
    - each candidate's label shows the **full remaining** stroke sequence
    - press **TAB** to autocomplete all strokes shared by the top 2 candidates
@@ -294,7 +294,7 @@ are verified after download. Only `pinyin_simp.prism.txt` is checked into git.
 | File | Source | Description |
 |------|--------|-------------|
 | `data/raw/hanzi_db.csv` | [ruddfawcett/hanziDB.csv](https://github.com/ruddfawcett/hanziDB.csv) (MIT) | Character frequency database (sorted by rank) |
-| `data/raw/stroke.dict.yaml` | Generated from [theajack/cnchar](https://github.com/theajack/cnchar) (MIT) by `scripts/bin/build_stroke_map.dart` | Character → stroke sequence (h/s/p/n/d/t/z) |
+| `data/raw/stroke.dict.yaml` | Generated from [theajack/cnchar](https://github.com/theajack/cnchar) (MIT) by `scripts/bin/build_stroke_map.dart` | Character → stroke sequence (h/s/p/n/d/z) |
 | `data/raw/pinyin_simp.dict.yaml` | [rime/rime-pinyin-simp](https://github.com/rime/rime-pinyin-simp) (Apache-2.0) | Pinyin → character mapping with multi-reading support (多音字) |
 | `data/raw/pinyin_simp.prism.txt` | Rime deployment artifact (checked in) | Canonical pinyin syllable list |
 

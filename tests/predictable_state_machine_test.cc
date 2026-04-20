@@ -148,10 +148,10 @@ TEST_CASE("PredictableStateMachine J/K/L/F from stroke enters selecting with del
     CHECK(snap.stroke_buffer == "d");
   }
 
-  SECTION("t is a distinct stroke key") {
+  SECTION("t is not a stroke key (merged into d)") {
     const auto snap = machine.HandleKey('t');
     CHECK(snap.phase == Phase::kStrokeInput);
-    CHECK(snap.stroke_buffer == "t");
+    CHECK(snap.stroke_buffer.empty());
   }
 
   SECTION("SPACE from stroke commits top candidate") {

@@ -121,10 +121,11 @@ stateDiagram-v2
 
 ## Key Conflict Resolution
 
-Stroke keys (`h`, `s`, `p`, `d`/`n`, `z`) and selection keys (`J`, `K`, `L`, `F`)
+Stroke keys (`h`, `s`, `p`, `n`, `d`, `z`) and selection keys (`J`, `K`, `L`, `F`)
 are disjoint sets, so both are valid in STROKE_INPUT simultaneously: lowercase
 letters add strokes while uppercase letters enter SELECTING with a navigation
-delta. `d` is an alias for `n` (both represent 捺/点).
+delta. `d` covers 点 plus the rising-hook strokes 提/挑 (hard to distinguish
+from 点 visually, so they're folded into one key).
 
 Stroke keys overlap with pinyin input letters. Since PINYIN_INPUT and
 STROKE_INPUT are separated by an explicit space transition, this is unambiguous.

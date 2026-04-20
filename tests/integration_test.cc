@@ -427,9 +427,9 @@ TEST_CASE("Semicolon is ignored in selecting phase", "[integration]") {
   CHECK(snap.commit_text.empty());
 }
 
-// --- Stroke keys d and t ---
+// --- Stroke keys: d is a class, t is folded into d ---
 
-TEST_CASE("Stroke keys d and t are independent stroke classes",
+TEST_CASE("Stroke key t is folded into d and ignored as a stroke",
           "[integration]") {
   TestFixture f;
   FakeSession session({
@@ -449,7 +449,7 @@ TEST_CASE("Stroke keys d and t are independent stroke classes",
 
   const auto snap_t = machine.HandleKey('t');
   CHECK(snap_t.phase == Phase::kStrokeInput);
-  CHECK(snap_t.stroke_buffer == "dt");
+  CHECK(snap_t.stroke_buffer == "d");
 }
 
 TEST_CASE("Selecting hint uses 1-indexed positions and F advances 10", "[integration]") {

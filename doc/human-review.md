@@ -1,6 +1,9 @@
 Human review feedback of the docs or code. The 1st level title is the
 git hash that the review is for. They are sorted by time in descending order.
 
+# Git hash e8bb63ea (2026-04-20)
+- The stroke `t` and `d` are very hard to distinguish. Combine them into `d`.
+
 # Git hash 140f2a8 (2026-04-07)
 - In stroke phase, instead of just showing the next stroke, show the full stroke sequence
   remaining so it's easier for users to know what **sequence** to type next.

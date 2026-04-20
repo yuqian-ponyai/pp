@@ -185,7 +185,7 @@ bool PredictableStateMachine::IsPinyinLetter(char key) {
 bool PredictableStateMachine::IsStrokeKey(char key) {
   const char lower = static_cast<char>(std::tolower(static_cast<unsigned char>(key)));
   return lower == 'h' || lower == 's' || lower == 'p' || lower == 'n' ||
-         lower == 'd' || lower == 't' || lower == 'z';
+         lower == 'd' || lower == 'z';
 }
 
 char PredictableStateMachine::ToUpperAscii(char key) {
@@ -269,7 +269,7 @@ std::string PredictableStateMachine::BuildHint() const {
     case Phase::kStrokeInput: {
       const std::size_t char_pos = stroke_segments_.size();
       return "Char " + std::to_string(char_pos) +
-             " strokes. h/s/p/n/d/t/z adds stroke. TAB autocompletes."
+             " strokes. h/s/p/n/d/z adds stroke. TAB autocompletes."
              " ; next char. J/K/L/F selects. SPACE commits top.";
     }
     case Phase::kSelecting: {

@@ -3,11 +3,11 @@
 Research on Chinese character stroke types, their classification, and available
 machine-readable datasets for stroke-based disambiguation.
 
-## The Seven Stroke Classes Used by Predictable Pinyin
+## The Six Stroke Classes Used by Predictable Pinyin
 
 Chinese characters are composed of strokes that textbooks traditionally group
 into 5 basic types (横、竖、撇、捺、折). Predictable Pinyin extends this to
-**seven** classes by splitting 点 (diǎn) out of 捺 (nà) and adding 提 (tí):
+**six** classes by splitting 点 (diǎn) out of 捺 (nà):
 
 | # | Chinese | Pinyin | Shape               | Key | Visual |
 |---|---------|--------|---------------------|-----|--------|
@@ -15,13 +15,15 @@ into 5 basic types (横、竖、撇、捺、折). Predictable Pinyin extends thi
 | 2 | 竖      | shù    | Vertical            | `s` | `丨`   |
 | 3 | 撇      | piě    | Left-falling        | `p` | `/`    |
 | 4 | 捺      | nà     | Right-falling       | `n` | `\`    |
-| 5 | 点      | diǎn   | Dot                 | `d` | `丶`   |
-| 6 | 提      | tí     | Rising / up-hook    | `t` | `㇀`   |
-| 7 | 折      | zhé    | Turning / hook      | `z` | `㇠`   |
+| 5 | 点      | diǎn   | Dot (incl. 提/挑)    | `d` | `丶`   |
+| 6 | 折      | zhé    | Turning / hook      | `z` | `㇠`   |
 
-Separating `d`/`t` from `n` gives a finer-grained disambiguation signal: many
+Separating `d` from `n` gives a finer-grained disambiguation signal: many
 characters that share the same 捺 layout differ only in whether a terminal
-stroke is a proper 捺, a small dot, or a rising flick.
+stroke is a proper 捺 or a small dot. 提 (tí, the rising hook ㇀) and 挑 are
+folded into `d` rather than given their own key because users find them hard
+to distinguish from 点 visually — picking the easier-to-remember key keeps
+the method predictable.
 
 ## Data Strategy
 
@@ -51,11 +53,11 @@ dictionary has stroke data. Rare CJK extensions outside cnchar's table simply
 won't participate in stroke filtering, which is acceptable — they fall back to
 pinyin-only ranking.
 
-### cnchar's 27-letter alphabet → our 7-letter alphabet
+### cnchar's 27-letter alphabet → our 6-letter alphabet
 
 cnchar internally encodes stroke shapes with a 27-letter alphabet (a..z plus
 variants) that captures CJK stroke geometry. The generator collapses this to
-our 7-letter alphabet:
+our 6-letter alphabet:
 
 | cnchar letter | Meaning in cnchar       | Predictable Pinyin class |
 |---------------|-------------------------|--------------------------|
@@ -63,8 +65,7 @@ our 7-letter alphabet:
 | `f`           | 竖 (vertical)           | `s`                      |
 | `s`           | 撇 (left-falling)       | `p`                      |
 | `l`           | 捺 (right-falling, dot) | `n`                      |
-| `k`           | 点 (dot)                | `d`                      |
-| `d`, `i`      | 提 / 挑 (rising hooks)  | `t`                      |
+| `k`, `d`, `i` | 点 / 提 / 挑 (dot + rising hooks) | `d`              |
 | everything else | 折 variants (all hooks/turns: 横折, 竖钩, 斜钩, 竖弯, 横折弯钩, …) | `z` |
 
 The collapse rules are encoded inline in

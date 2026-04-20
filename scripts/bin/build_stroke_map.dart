@@ -5,18 +5,18 @@
 //
 // cnchar stores each character's stroke order as a string over a 27-letter
 // alphabet (a..z + extras) that encodes CJK stroke shapes. Predictable Pinyin
-// uses a coarser 7-letter alphabet:
+// uses a coarser 6-letter alphabet:
 //
 //     h = 横   (horizontal)
 //     s = 竖   (vertical)
 //     p = 撇   (left-falling)
 //     n = 捺   (right-falling, including left-falling dot 丶)
-//     d = 点   (small dot)
-//     t = 提   (rising hook ㇀)
+//     d = 点   (small dot, including 提/挑 rising hooks — hard to distinguish
+//              from 点 visually, so folded together for predictability)
 //     z = 折   (any hook/turn variant)
 //
 // This script downloads cnchar's `stroke-order-jian.json` at the pinned SHA,
-// verifies its SHA256, collapses each cnchar letter to one of our 7 classes,
+// verifies its SHA256, collapses each cnchar letter to one of our 6 classes,
 // and emits a tab-separated stroke dict in the format the C++ loader in
 // `src/stroke_filter.cc` already parses.
 //
@@ -35,16 +35,16 @@ const String strokeOrderJsonPath =
 const String expectedStrokeOrderSha256 =
     '412e3beb587aa5e8b423655226b956eaef0496e8c06e486d7584b2f3e1dbcdcc';
 
-// 27-letter → 7-letter collapse.
+// 27-letter → 6-letter collapse.
 //
 // Mapping rationale (see doc/stroke-data.md for the full table):
-//   j → h   (横)
-//   f → s   (竖)
-//   s → p   (撇)
-//   l → n   (捺 — cnchar's 'l' is the main right-falling stroke; left-falling
-//           dot 丶 in cnchar is also encoded as 'l' via the shape table)
-//   k → d   (点 — small dot)
-//   d, i → t (提 — cnchar's 'd' is "点2" shape ㇀ = 提; 'i' is 挑)
+//   j → h      (横)
+//   f → s      (竖)
+//   s → p      (撇)
+//   l → n      (捺 — cnchar's 'l' is the main right-falling stroke; left-falling
+//               dot 丶 in cnchar is also encoded as 'l' via the shape table)
+//   k, d, i → d (点 — small dot, plus 提/挑 rising hooks which users find hard
+//               to distinguish from 点 visually)
 //   everything else → z (any 折/hook/turn variant)
 const Map<String, String> _collapse = {
   'j': 'h',
@@ -52,8 +52,8 @@ const Map<String, String> _collapse = {
   's': 'p',
   'l': 'n',
   'k': 'd',
-  'd': 't',
-  'i': 't',
+  'd': 'd',
+  'i': 'd',
 };
 
 String _collapseStroke(String letter) => _collapse[letter] ?? 'z';
@@ -161,9 +161,9 @@ Future<int> main(List<String> args) async {
   sink.writeln('#         sha256 $expectedStrokeOrderSha256');
   sink.writeln('#');
   sink.writeln(
-      '# Alphabet: h=横  s=竖  p=撇  n=捺  d=点  t=提  z=折 (any hook/turn).');
+      '# Alphabet: h=横  s=竖  p=撇  n=捺  d=点 (incl. 提/挑)  z=折 (any hook/turn).');
   sink.writeln(
-      '# cnchar\'s 27-letter alphabet is collapsed to these 7 classes; see');
+      '# cnchar\'s 27-letter alphabet is collapsed to these 6 classes; see');
   sink.writeln('# doc/stroke-data.md for the full mapping.');
   sink.writeln('#');
   sink.writeln('---');
@@ -189,7 +189,7 @@ Future<int> main(List<String> args) async {
   await sink.flush();
   await sink.close();
   stdout.writeln(
-      'wrote ${outFile.path} ($written entries, 7-letter alphabet)');
+      'wrote ${outFile.path} ($written entries, 6-letter alphabet)');
   return 0;
 }
 

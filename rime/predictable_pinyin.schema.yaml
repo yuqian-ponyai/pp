@@ -77,8 +77,8 @@ reverse_lookup:
   suffix: "'"
   tips: 〔笔画〕
   preedit_format:
-    # CJK Strokes block: 横 竖 撇 捺 点 提 折
-    - xlit/hspndtz/㇐㇑㇒㇏㇔㇀㇠/
+    # CJK Strokes block: 横 竖 撇 捺 点 折
+    - xlit/hspndz/㇐㇑㇒㇏㇔㇠/
 
 punctuator:
   import_preset: symbols
