@@ -32,30 +32,11 @@ fi
 
 ## Engine Model
 
-macOS input methods are `.app` bundles. We install to
-`~/Library/Input Methods/` — the user-writable location, which does not
-require `sudo` or an Apple Developer Program enrollment. macOS still
-expects the bundle to be launched and registered via
-`TISRegisterInputSource()` before it appears in System Settings.
-
-- Build produces `build/PredictablePinyin.app` (a CMake `MACOSX_BUNDLE`
-  target)
-- `Info.plist` keys register the `IMKInputController` subclass
-- Icon (`PredictablePinyin.icns`) is generated from
-  `data/icons/predictable-pinyin.png` by `scripts/build-icns.sh`
-- Rime shared data ships inside `Contents/SharedSupport/`
-- Rime user data lives at `~/Library/Rime/`
-- librime is loaded from Homebrew at runtime; the bundle links against
-  `$(brew --prefix librime)/lib/librime.1.dylib` and users are expected
-  to have run `brew install librime` themselves. No embedded dylib,
-  no self-contained relocation.
-
-This matches the
-[fcitx5-macos-installer](https://github.com/fcitx-contrib/fcitx5-macos-installer)
-reference pattern: user-dir install, ad-hoc codesign, explicit
-`TISRegisterInputSource` call. No Developer ID certificate or
-notarization is required because the bundle is not placed under
-`/Library/Input Methods/`.
+macOS input methods are `.app` bundles installed under
+`~/Library/Input Methods/` (user-writable, no sudo / Developer Program
+required). librime is loaded from Homebrew at runtime — no embedded
+dylib. See [phase-8-macos-plan.md](./phase-8-macos-plan.md) for the
+full design.
 
 ## Install and Deploy
 
@@ -63,28 +44,11 @@ notarization is required because the bundle is not placed under
 ./scripts/install-macos.sh
 ```
 
-What it does:
-
-1. `scripts/build-icns.sh` regenerates the `.icns` (no-op if up-to-date)
-2. `cmake -B build -DCMAKE_BUILD_TYPE=Release …`
-3. `./scripts/build.sh` builds `build/PredictablePinyin.app`
-4. Copies the bundle to `~/Library/Input Methods/PredictablePinyin.app`
-   and ad-hoc codesigns it
-5. Seeds `~/Library/Rime/default.custom.yaml` with the schema list
-6. Runs `rime_deployer --build` against the bundle's `SharedSupport/`
-7. `open`s the bundle once so IMKServer binds the connection
-8. Calls `PredictablePinyin --register-input-source`, which invokes
-   `TISRegisterInputSource(bundleURL)`. Without this call the bundle
-   never shows up in System Settings — macOS only scans Input Methods
-   directories at login and requires the explicit API call for freshly
-   installed bundles.
-9. Calls `PredictablePinyin --enable-input-source` so the registered
-   mode is enabled in the user's TIS prefs.
-
-The bundle's `main()` sets
-`NSApp.activationPolicy = .accessory` so the IMK server process stays
-alive as a background-only input method instead of being auto-terminated
-for having no windows.
+The script builds the `.app`, ad-hoc codesigns it, copies it to
+`~/Library/Input Methods/`, seeds `~/Library/Rime/default.custom.yaml`,
+runs `rime_deployer --build` against the bundle's `SharedSupport/`,
+and calls `TISRegisterInputSource` / `TISEnableInputSource` so the
+input source appears in System Settings without a logout.
 
 After install, add the input method:
 

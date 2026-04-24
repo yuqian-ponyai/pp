@@ -164,21 +164,14 @@ schema, and restarts the input method framework. Matching uninstall script:
 ### macOS Deployment
 
 Setup, install, and troubleshooting instructions:
-[`doc/dev-setup-macos.md`](doc/dev-setup-macos.md).
 
-```bash
-./scripts/install-macos.sh     # build + copy .app to ~/Library/Input Methods/
-./scripts/uninstall-macos.sh   # remove the installed .app
-./scripts/build-dmg.sh         # build/PredictablePinyin.dmg
-```
+- **IMK**: [`doc/dev-setup-macos.md`](doc/dev-setup-macos.md) — `./scripts/install-macos.sh`
 
-`install-macos.sh` builds the `PredictablePinyin.app` bundle via CMake, ad-hoc
-signs it, copies it to `~/Library/Input Methods/` (no sudo, no Apple Developer
-Program required), seeds `~/Library/Rime/`, runs `rime_deployer` against the
-bundle's `SharedSupport/` directory, then `open`s the bundle and calls
-`TISRegisterInputSource()` / `TISEnableInputSource()` so it shows up in the
-input-source picker immediately. After install, confirm under
-System Settings → Keyboard → Input Sources → + → Chinese (Simplified).
+The script builds the `.app` bundle, copies it to `~/Library/Input Methods/`
+(no sudo), seeds `~/Library/Rime/`, and registers the bundle with TIS so it
+appears under System Settings → Keyboard → Input Sources. Matching scripts:
+
+- **IMK**: `./scripts/uninstall-macos.sh`, `./scripts/build-dmg.sh`
 
 Installed data:
 

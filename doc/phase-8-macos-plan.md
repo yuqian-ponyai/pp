@@ -97,44 +97,11 @@ Modified files:
    used by Rime/Squirrel's `--register-input-source` and Apple's TIS
    APIs in `Carbon/HIToolbox`.
 
-## Data Paths
-
-| Data | macOS path |
-|------|-----------|
-| Rime shared data | `PredictablePinyin.app/Contents/SharedSupport/` |
-| Rime user data | `~/Library/Rime/` |
-| Rime prism | `PredictablePinyin.app/Contents/SharedSupport/pinyin_simp.prism.txt` |
-| Rime deploy output | `~/Library/Rime/build/` (created by `rime_deployer`) |
-| Stroke dict | `…/SharedSupport/stroke.dict.yaml` |
-| Frequency DB | `…/SharedSupport/hanzi_db.csv` |
-| Pinyin dict | `…/SharedSupport/pinyin_simp.dict.yaml` |
-| Schema | `…/SharedSupport/predictable_pinyin.schema.yaml` |
-| Icon | `…/Resources/PredictablePinyin.icns` |
-
-## CMake additions (excerpt)
-
-```cmake
-if(APPLE)
-  find_library(INPUT_METHOD_KIT_FRAMEWORK InputMethodKit REQUIRED)
-  find_library(APPKIT_FRAMEWORK AppKit REQUIRED)
-  find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
-
-  configure_file(data/macos/Info.plist.in
-                 "${CMAKE_CURRENT_BINARY_DIR}/Info.plist" @ONLY)
-
-  add_executable(PredictablePinyin MACOSX_BUNDLE src/macos_plugin.mm)
-  set_source_files_properties(src/macos_plugin.mm PROPERTIES
-    COMPILE_FLAGS "-fobjc-arc")
-  target_link_libraries(PredictablePinyin PRIVATE pp_core
-    ${INPUT_METHOD_KIT_FRAMEWORK} ${APPKIT_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
-  # POST_BUILD copies data into Contents/SharedSupport and icon into Resources.
-endif()
-```
-
-`pp_core`'s `target_link_directories` is now `PUBLIC`; on Linux the
-librime lib sits in a default search path, but Homebrew installs it
-under `/opt/homebrew/Cellar/librime/...` which must propagate to
-downstream targets.
+Installed file paths are listed in
+[dev-setup-macos.md § Installed Files](./dev-setup-macos.md#installed-files).
+Source of truth for the build wiring is the `if(APPLE)` branch in
+`CMakeLists.txt` — `pp_core`'s `target_link_directories` is `PUBLIC`
+so downstream targets pick up Homebrew's librime prefix.
 
 ## Verification
 
