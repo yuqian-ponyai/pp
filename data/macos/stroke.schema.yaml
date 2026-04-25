@@ -1,0 +1,45 @@
+# Minimal stroke schema, declared as a dependency by
+# predictable_pinyin.schema.yaml. Required so Rime knows how to load
+# stroke.dict.yaml during deploy. The state machine consults the stroke
+# dictionary directly via StrokeFilter, so this schema doesn't need to be
+# user-facing — it just needs to compile.
+schema:
+  schema_id: stroke
+  name: 笔画
+  version: "0.1"
+  author:
+    - Pony AI Inc.
+  description: |
+    Five-stroke (横竖撇捺折) reverse-lookup dictionary backing
+    Predictable Pinyin's stroke disambiguation. Not selectable on its own.
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - fallback_segmentor
+  translators:
+    - script_translator
+
+speller:
+  alphabet: "hspndz"
+
+translator:
+  dictionary: stroke
+  enable_completion: true
+  enable_sentence: false

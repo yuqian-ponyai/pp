@@ -73,6 +73,7 @@ larger tasks. LLM agents should also follow all instructions in [LLM agents](#ll
 
 - Docs index: [`doc/README.md`](doc/README.md)
 - Linux ibus plan: [`doc/phase-8-ibus-linux-plan.md`](doc/phase-8-ibus-linux-plan.md)
+- macOS plan: [`doc/phase-8-macos-plan.md`](doc/phase-8-macos-plan.md)
 
 ## Development
 
@@ -87,6 +88,9 @@ larger tasks. LLM agents should also follow all instructions in [LLM agents](#ll
 # Linux (Ubuntu/Debian) — core + ibus
 sudo apt-get install -y librime-dev librime-data-luna-pinyin librime-data-stroke \
   librime-data-pinyin-simp libibus-1.0-dev
+
+# macOS — core + IMK input method
+brew install librime pkgconf cmake
 ```
 
 If cmake fails with "Could not find CMAKE_ROOT", create a local `env.sh`
@@ -156,6 +160,18 @@ The script builds the project, runs `sudo cmake --install`, deploys the Rime
 schema, and restarts the input method framework. Matching uninstall script:
 
 - **ibus**: `./scripts/uninstall-ibus.sh`
+
+### macOS Deployment
+
+Setup, install, and troubleshooting instructions:
+
+- **IMK**: [`doc/dev-setup-macos.md`](doc/dev-setup-macos.md) — `./scripts/install-macos.sh`
+
+The script builds the `.app` bundle, copies it to `~/Library/Input Methods/`
+(no sudo), seeds `~/Library/Rime/`, and registers the bundle with TIS so it
+appears under System Settings → Keyboard → Input Sources. Matching scripts:
+
+- **IMK**: `./scripts/uninstall-macos.sh`, `./scripts/build-dmg.sh`
 
 Installed data:
 
