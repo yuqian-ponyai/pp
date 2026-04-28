@@ -1,6 +1,20 @@
 Human review feedback of the docs or code. The 1st level title is the
 git hash that the review is for. They are sorted by time in descending order.
 
+# Git hash 0dcdc9d9 (2026-04-28)
+- The hint in ibus is very long, and when `cmd+space` is typed when the hint is
+  shown, the whole hint is output. Here's an example hint `Type pinyin letters.
+  ; enters strokes. SPACE commits top. BACKSPACE deletes.h    Type pinyin
+  letters. ; enters strokes. SPACE commits top. BACKSPACE deletes`. It has 2
+  issues: (1) in VSCode/Cursor, the hint will trigger horizontal scrolling to
+  hide the important content on the left; (2) the unexpected output takes some
+  effort to remove. Ensure that there's no such output, and either shorten the
+  hint, or put hint in other places that does not affect VSCode/Cursor text
+  input horizontal scrolling.
+- Let's remove our customized sorting since it doesn't consider 多音字. For example,
+  `说` is currently ranked higher than `月` for `yue` which is unexpected. Let's
+  use the default Rime sorting to avoid that issue.
+
 # Git hash e8bb63ea (2026-04-20)
 - The stroke `t` and `d` are very hard to distinguish. Combine them into `d`.
 
