@@ -9,8 +9,10 @@ if [[ ! -d build ]]; then
   exit 1
 fi
 
-# shellcheck disable=SC1091
-source env.sh
+if [[ -f env.sh ]]; then
+  # shellcheck disable=SC1091
+  source env.sh
+fi
 
 "$repo_root/scripts/download-data.sh"
 

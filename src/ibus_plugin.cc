@@ -164,10 +164,6 @@ static std::string BuildPreedit(const StateSnapshot& snap) {
     preedit += " | ";
     preedit += snap.stroke_buffer;
   }
-  if (!snap.hint.empty()) {
-    preedit += "    ";
-    preedit += snap.hint;
-  }
   return preedit;
 }
 
@@ -190,6 +186,13 @@ static void ibus_pp_engine_update_ui(IBusPPEngine* pp) {
   IBusText* preedit = ibus_text_new_from_string(preedit_str.c_str());
   ibus_engine_update_preedit_text(engine, preedit,
                                   ibus_text_get_length(preedit), TRUE);
+
+  if (snap.hint.empty()) {
+    ibus_engine_hide_auxiliary_text(engine);
+  } else {
+    IBusText* auxiliary = ibus_text_new_from_string(snap.hint.c_str());
+    ibus_engine_update_auxiliary_text(engine, auxiliary, TRUE);
+  }
 
   if (snap.candidates.empty()) {
     ibus_engine_hide_lookup_table(engine);

@@ -389,38 +389,18 @@ std::vector<std::string> PredictableStateMachine::CurrentCandidates() const {
           candidates.end());
     }
   }
-  std::vector<std::string> words;
-  std::vector<std::string> singles;
-  for (auto& c : candidates) {
-    if (StrokeFilter::SplitUtf8(c).size() > 1) {
-      words.push_back(std::move(c));
-    } else {
-      singles.push_back(std::move(c));
-    }
-  }
   // In stroke phase, exact stroke matches rank above prefix-only matches.
   const bool has_strokes = !stroke_segments_.empty() &&
                            !stroke_segments_[0].empty() &&
                            phase_ != Phase::kPinyinInput;
   if (has_strokes) {
-    std::vector<std::string> exact, prefix_only;
-    for (auto& s : singles) {
-      if (stroke_filter_.IsExactStrokeMatch(s, stroke_segments_[0]))
-        exact.push_back(std::move(s));
-      else
-        prefix_only.push_back(std::move(s));
-    }
-    frequency_sorter_.Sort(exact);
-    frequency_sorter_.Sort(prefix_only);
-    singles.clear();
-    singles.insert(singles.end(), exact.begin(), exact.end());
-    singles.insert(singles.end(), prefix_only.begin(), prefix_only.end());
-  } else {
-    frequency_sorter_.Sort(singles);
+    std::stable_partition(
+        candidates.begin(), candidates.end(),
+        [this](const std::string& c) {
+          return StrokeFilter::SplitUtf8(c).size() == 1 &&
+                 stroke_filter_.IsExactStrokeMatch(c, stroke_segments_[0]);
+        });
   }
-  candidates.clear();
-  candidates.insert(candidates.end(), words.begin(), words.end());
-  candidates.insert(candidates.end(), singles.begin(), singles.end());
   return candidates;
 }
 

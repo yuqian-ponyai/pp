@@ -157,13 +157,6 @@ std::vector<std::string> FrequencySorter::CharactersForSyllable(
   return result;
 }
 
-void FrequencySorter::Sort(std::vector<std::string>& candidates) const {
-  std::stable_sort(candidates.begin(), candidates.end(),
-                   [this](const std::string& a, const std::string& b) {
-                     return RankOf(a) < RankOf(b);
-                   });
-}
-
 int FrequencySorter::RankOf(const std::string& candidate) const {
   const auto it = ranks_.find(FirstUtf8Char(candidate));
   return (it != ranks_.end()) ? it->second : INT_MAX;

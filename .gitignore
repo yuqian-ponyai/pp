@@ -14,3 +14,6 @@ data/raw/pinyin_simp.dict.yaml
 # Dart tooling for scripts/
 scripts/.dart_tool/
 scripts/.packages
+
+# FVM Version Cache
+.fvm/

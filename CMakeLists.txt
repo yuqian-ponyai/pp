@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
+if(POLICY CMP0110)
+  cmake_policy(SET CMP0110 NEW)
+endif()
+
 # macOS deployment target must be set BEFORE project() so the compiler picks
 # it up. We pin to 13.0 to match the LSMinimumSystemVersion in
 # data/macos/Info.plist.in. Without this, the binary bakes in whatever the
@@ -10,7 +14,7 @@ if(APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "macOS deployment target")
 endif()
 
-project(predictable_pinyin VERSION 0.2.0 LANGUAGES CXX)
+project(predictable_pinyin VERSION 0.2.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

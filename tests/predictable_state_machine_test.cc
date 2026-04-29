@@ -90,9 +90,8 @@ TEST_CASE("PredictableStateMachine J/K/L/F from stroke enters selecting with del
   const std::filesystem::path hanzi_db_path = WriteSampleHanziDb(dir);
   const ScopedDirectoryCleanup cleanup(dir);
 
-  // After frequency sort for "ni": 你(73) < 尼(1185) < 拟(1800)
   FakeSession session({
-      {"n", {"你"}}, {"ni", {"你", "拟", "尼"}},
+      {"n", {"你"}}, {"ni", {"你", "尼", "拟"}},
   });
   PredictableStateMachine machine(&session);
   REQUIRE(machine.Initialize(prism_path, stroke_dict_path, hanzi_db_path));

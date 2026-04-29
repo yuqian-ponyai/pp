@@ -37,7 +37,7 @@ The project will produce a Rime-based input method with these components:
 |-----------|-------------|
 | State machine processor | Multi-phase input processor (pinyin → stroke → selection) |
 | Stroke filter | Filter candidates by stroke sequence (h/s/p/n/z) |
-| Frequency sorter | Reorder candidates by hanziDB frequency rank |
+| Pinyin metadata loader | Validate readings and support virtual candidates |
 | Pinyin trie | Valid pinyin syllable trie for auto-end detection |
 
 **Raw data files (read directly at runtime, no preprocessing):**
@@ -88,7 +88,7 @@ Tasks:
 3. ✅ Implement SELECTING state — handle J/K/L/F/D navigation
 4. ✅ Implement backspace behavior across all states
 5. ✅ Implement auto-transition rules (pinyin auto-end, single-candidate auto-commit)
-6. ✅ Show state hints in the preedit area
+6. ✅ Show state hints outside editable preedit where the framework supports it
 
 Estimated effort: 3-5 days
 
@@ -105,15 +105,15 @@ Tasks:
 
 Estimated effort: 2-3 days
 
-### ✅ Phase 5: Candidate Sorting (C++ Filter)
+### ✅ Phase 5: Candidate Metadata (C++ Filter)
 
-**Goal**: Sort candidates by hanziDB frequency rank.
+**Goal**: Preserve Rime order while loading metadata needed for filtering.
 
 Tasks:
 1. ✅ Parse `hanzi_db.csv` into memory at init (already sorted by frequency rank)
-2. ✅ Implement sorting: reorder candidates by frequency_rank
-3. ✅ Characters not in hanziDB get rank = infinity (placed last)
-4. ✅ Ensure sorting is stable and deterministic
+2. ✅ Load supplementary Rime pinyin readings for 多音字
+3. ✅ Validate single-character candidates against all known readings
+4. ✅ Preserve Rime candidate order after filtering
 
 Estimated effort: 1 day
 
@@ -134,7 +134,7 @@ Estimated effort: 1-2 days
 **Goal**: End-to-end testing, edge cases, UX refinement.
 
 Tasks:
-1. ✅ Test full end-to-end flow (pinyin → stroke → frequency sort → select → commit)
+1. ✅ Test full end-to-end flow (pinyin → stroke → select → commit)
 2. ✅ Test multi-reading characters (多音字: 重 zhòng/chóng)
 3. ✅ Test edge cases: backspace at state boundaries, empty stroke auto-commit/select,
    auto-end of extensionless syllables, idle backspace no-op

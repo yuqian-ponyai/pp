@@ -8,9 +8,9 @@
 
 namespace predictable_pinyin {
 
-// Loads character frequency ranks from hanzi_db.csv and sorts candidate lists
-// so that more frequent characters appear first. Characters not in the database
-// are placed last; ties preserve the original order (stable sort).
+// Loads character pinyin data from hanzi_db.csv and supplementary Rime data.
+// Candidate order comes from Rime; ranks are only used when synthesizing virtual
+// candidates that Rime did not provide.
 class FrequencySorter {
  public:
   bool LoadFromCsv(const std::filesystem::path& csv_path);
@@ -18,9 +18,6 @@ class FrequencySorter {
   // Loads additional pinyin readings from a Rime pinyin_simp.dict.yaml file.
   // Only single-character entries are used; multi-character entries are skipped.
   bool LoadSupplementaryPinyin(const std::filesystem::path& dict_path);
-
-  // Sorts candidates in-place by the first UTF-8 character's frequency rank.
-  void Sort(std::vector<std::string>& candidates) const;
 
   // Returns true if the character's known pinyin matches the given toneless
   // pinyin, or if the character is not in the database (pass-through).

@@ -131,6 +131,7 @@ inline std::filesystem::path WriteSamplePrism() {
   out << "shen\tshen\t-\t0\n";
   out << "chong\tchong\t-\t0\n";
   out << "nu\tnu\t-\t0\n";
+  out << "yue\tyue\t-\t0\n";
   out.close();
 
   return dir / "sample.prism.txt";
@@ -175,6 +176,8 @@ inline std::filesystem::path WriteSampleStrokeDict(
   out << "沈\tnnnnzpz\n";
   out << "努\tzphznzp\n";
   out << "怒\tzphznnznn\n";
+  out << "月\tpzhh\n";
+  out << "说\tdzpz\n";
   out.close();
   return dir / "sample.stroke.dict.yaml";
 }
@@ -217,6 +220,8 @@ inline std::filesystem::path WriteSampleHanziDb(
   out << "1681,沈,chén,sink,水,85.4,7,,0870\n";
   out << "1081,努,nǔ,exert,力,19.5,7,3,0924\n";
   out << "1143,怒,nù,anger,心,61.5,9,6,1742\n";
+  out << "50,说,shuō,speak,讠,149.7,9,1,1605\n";
+  out << "1000,月,yuè,moon,月,74.0,4,1,0124\n";
   out.close();
   return dir / "sample_hanzi_db.csv";
 }
@@ -234,6 +239,7 @@ inline std::filesystem::path WriteSamplePinyinDict(
   // 重 has two readings: zhong and chong
   out << "重\tzhong\t100000\n";
   out << "重\tchong\t5000\n";
+  out << "说\tyue\t1000\n";
   out.close();
   return dir / "sample.pinyin_simp.dict.yaml";
 }

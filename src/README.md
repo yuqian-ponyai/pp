@@ -14,7 +14,7 @@ pieces so that pure logic can be tested without needing a live `librime` session
 | `rime_session.h/.cc` | Minimal wrapper around the `librime` C API for key input, candidate snapshots, and commits |
 | `predictable_state_machine.h/.cc` | Core state machine: pinyin → stroke → selecting phases, hints, undo/backspace; apostrophe syllable separator; exact stroke match priority; partial commit with continuation to remaining pinyin |
 | `stroke_filter.h/.cc` | Loads `stroke.dict.yaml`; per-character stroke filtering via segments; remaining-stroke lookups; `HasStrokePrefix` for single-char checks; `IsExactStrokeMatch` for exact match detection; `SplitUtf8` helper |
-| `frequency_sorter.h/.cc` | Loads `hanzi_db.csv` + supplementary `pinyin_simp.dict.yaml` for multi-reading characters (多音字); sorts candidates by frequency rank; validates candidate pinyin against all known readings (`MatchesPinyin`, `StripPinyinTones`); `CharactersForSyllable` for syllable-based lookup |
+| `frequency_sorter.h/.cc` | Loads `hanzi_db.csv` + supplementary `pinyin_simp.dict.yaml` for multi-reading characters (多音字); validates candidate pinyin against all known readings (`MatchesPinyin`, `StripPinyinTones`); `CharactersForSyllable` for syllable-based virtual lookup |
 
 ## Structure
 
@@ -24,7 +24,7 @@ flowchart LR
     IBUS["ibus_plugin.cc<br/>ibus engine executable"] --> SM
     SM --> TRIE["pinyin_trie<br/>canonical syllables<br/>auto-end checks"]
     SM --> SF["stroke_filter<br/>stroke-prefix filtering"]
-    SM --> FS["frequency_sorter<br/>frequency-rank sorting"]
+    SM --> FS["frequency_sorter<br/>pinyin readings<br/>virtual lookup"]
     SM --> RIME["rime_session<br/>minimal librime wrapper"]
     RIME --> LIB["librime<br/>schema + candidates"]
 ```
@@ -53,19 +53,20 @@ flowchart LR
    For single-syllable input without apostrophe, multi-char candidates are
    filtered out and single-character candidates are validated via
    `FrequencySorter::MatchesPinyin`; for multi-syllable or apostrophe-separated
-   input, trusts Rime entirely. Then partitions: words first (Rime order),
-   single characters sorted by `FrequencySorter` with exact stroke matches
-   ranked above prefix-only matches. When committing a partial match (single
-   char from multi-syllable input), `ComputeRemainingPinyin` determines the
-   unconsumed syllables and re-enters them for continued input in stroke phase.
+   input, trusts Rime entirely. Candidate order otherwise stays in Rime order.
+   After strokes are typed, exact stroke matches are stably promoted above
+   prefix-only matches. When committing a partial match (single char from
+   multi-syllable input), `ComputeRemainingPinyin` determines the unconsumed
+   syllables and re-enters them for continued input in stroke phase.
 6. When Rime state (preedit, raw input) is needed, the state machine asks
    `RimeSession` for a context snapshot.
 7. The snapshot also includes `candidate_labels`: in stroke input these show the
    full remaining stroke sequence for each candidate; in selecting they show
    J/K/L/F relative to the current selection. TAB in stroke phase autocompletes
    strokes shared by the top 2 candidates.
-8. `ibus_plugin.cc` renders the resulting snapshot into the
-   framework's preedit text, hint text, and candidate list with labels.
+8. `ibus_plugin.cc` renders the resulting snapshot into the framework's preedit
+   text, auxiliary hint text, and candidate list with labels. Hints are kept out
+   of preedit so editors never receive hint text as committed composition.
 
 ## Tests
 
@@ -76,8 +77,8 @@ Current unit tests live in `tests/`:
 | `tests/pinyin_trie_test.cc` | Verifies canonical syllable loading and auto-end behavior without `librime` |
 | `tests/predictable_state_machine_test.cc` | Verifies `;`→stroke transition, J/K/L/F from stroke entering selection, d-as-stroke-key, SPACE commit, undo/backspace, and selection commit |
 | `tests/stroke_filter_test.cc` | Verifies per-character stroke filtering, `RemainingStrokesForSegment`, `SplitUtf8`, word-level matching, and integration with `PredictableStateMachine` |
-| `tests/frequency_sorter_test.cc` | Verifies frequency-rank sorting (reordering, unknown chars, stable sort) and end-to-end integration |
-| `tests/integration_test.cc` | End-to-end: full flow, SPACE commit from all phases, `;` enters stroke, d-as-stroke-key, incomplete pinyin commit, pinyin prefix+exact filtering, candidate labels (full remaining strokes), TAB stroke autocomplete (shared prefix, single candidate, divergent, partial), multi-reading chars (多音字: de/di, chen/shen, zhong/chong), backspace boundaries, deterministic ordering, word input (per-character stroke narrowing, skip-char `;;`, segment backspace, word ordering), multi-syllable pinyin (including virtual word composition from single chars), consistent ordering across phases, all punctuation (13 keys from idle, commit+punct from active phases, `;` idle vs active distinction), apostrophe syllable separator (single-syllable filtering, word enablement, multi-syllable passthrough), exact stroke match priority, partial commit with continuation |
+| `tests/frequency_sorter_test.cc` | Verifies pinyin-reading validation, Rime order preservation, and the `yue` polyphone ordering regression |
+| `tests/integration_test.cc` | End-to-end: full flow, SPACE commit from all phases, `;` enters stroke, d-as-stroke-key, incomplete pinyin commit, pinyin prefix+exact filtering, candidate labels (full remaining strokes), TAB stroke autocomplete (shared prefix, single candidate, divergent, partial), multi-reading chars (多音字: de/di, chen/shen, zhong/chong), backspace boundaries, deterministic ordering, word input (per-character stroke narrowing, skip-char `;;`, segment backspace, Rime ordering), multi-syllable pinyin (including virtual word composition from single chars), consistent ordering across phases, all punctuation (13 keys from idle, commit+punct from active phases, `;` idle vs active distinction), apostrophe syllable separator (single-syllable filtering, word enablement, multi-syllable passthrough), exact stroke match priority, partial commit with continuation |
 
 Shared test utilities (`FakeSession`, `ScopedDirectoryCleanup`, sample data
 writers) live in `tests/test_support.h`.

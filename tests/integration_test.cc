@@ -215,14 +215,14 @@ TEST_CASE("Full flow: pinyin, stroke, select via J, commit", "[integration]") {
   snap = machine.HandleKey(';');
   CHECK(snap.phase == Phase::kStrokeInput);
   REQUIRE(snap.candidates.size() == 3);
-  CHECK(snap.candidates[0] == "中");
+  CHECK(snap.candidates[0] == "种");
   CHECK(snap.candidates[1] == "重");
-  CHECK(snap.candidates[2] == "种");
+  CHECK(snap.candidates[2] == "中");
 
   snap = machine.HandleKey('p');
   REQUIRE(snap.candidates.size() == 2);
-  CHECK(snap.candidates[0] == "重");
-  CHECK(snap.candidates[1] == "种");
+  CHECK(snap.candidates[0] == "种");
+  CHECK(snap.candidates[1] == "重");
 
   machine.HandleKey('h');
   machine.HandleKey('s');
@@ -274,15 +274,15 @@ TEST_CASE("Candidate labels show full remaining strokes in stroke input phase", 
   CHECK(snap.phase == Phase::kStrokeInput);
   REQUIRE(snap.candidates.size() == 3);
   REQUIRE(snap.candidate_labels.size() == 3);
-  CHECK(snap.candidate_labels[0] == "szhs");       // 中: full remaining
+  CHECK(snap.candidate_labels[0] == "phspnszhs");  // 种: full remaining
   CHECK(snap.candidate_labels[1] == "phszhhhsh");  // 重: full remaining
-  CHECK(snap.candidate_labels[2] == "phspnszhs");  // 种: full remaining
+  CHECK(snap.candidate_labels[2] == "szhs");       // 中: full remaining
 
   snap = machine.HandleKey('p');
   REQUIRE(snap.candidates.size() == 2);
   REQUIRE(snap.candidate_labels.size() == 2);
-  CHECK(snap.candidate_labels[0] == "hszhhhsh");  // 重: remaining after "p"
-  CHECK(snap.candidate_labels[1] == "hspnszhs");  // 种: remaining after "p"
+  CHECK(snap.candidate_labels[0] == "hspnszhs");  // 种: remaining after "p"
+  CHECK(snap.candidate_labels[1] == "hszhhhsh");  // 重: remaining after "p"
 }
 
 TEST_CASE("Pinyin phase shows candidates with semicolon labels", "[integration]") {
@@ -483,7 +483,7 @@ TEST_CASE("SPACE commits selected candidate in selecting phase", "[integration]"
   machine.HandleKey('n');
   machine.HandleKey('i');
   machine.HandleKey(';');
-  machine.HandleKey('K');  // → kSelecting, index=2 (拟 after sort)
+  machine.HandleKey('K');  // → kSelecting, index=2
   const auto snap = machine.HandleKey(' ');
   CHECK(snap.phase == Phase::kIdle);
   CHECK(snap.commit_text == "拟");
@@ -632,10 +632,9 @@ TEST_CASE("Backspace across segment boundaries in word strokes", "[word_input]")
   CHECK(snap.phase == Phase::kPinyinInput);
 }
 
-TEST_CASE("Word candidates ordered before single chars in stroke phase", "[word_input]") {
+TEST_CASE("Word input preserves Rime candidate order in stroke phase", "[word_input]") {
   TestFixture f;
   // "zhongguo" is NOT a single syllable, so words appear.
-  // After partition: words=[中国], singles sorted by freq=[中(54), 种(736)]
   FakeSession session({
       {"zhongguo", {"中国", "种", "中"}},
   });
@@ -647,8 +646,8 @@ TEST_CASE("Word candidates ordered before single chars in stroke phase", "[word_
   auto snap = machine.Snapshot();
   REQUIRE(snap.candidates.size() == 3);
   CHECK(snap.candidates[0] == "中国");
-  CHECK(snap.candidates[1] == "中");
-  CHECK(snap.candidates[2] == "种");
+  CHECK(snap.candidates[1] == "种");
+  CHECK(snap.candidates[2] == "中");
 }
 
 TEST_CASE("Preedit shows segment separators in stroke phase", "[word_input]") {
@@ -716,7 +715,7 @@ TEST_CASE("J/K/L/F selects among word candidates", "[word_input]") {
   machine.HandleKey('J');  // → kSelecting
   const auto snap = machine.HandleKey(' ');
   CHECK(snap.phase == Phase::kIdle);
-  // After ordering: words first [中国, 重国], then singles [中]. J→index 1 → 重国
+  // Rime order is [中国, 重国, 中]. J→index 1 → 重国
   CHECK(snap.commit_text == "重国");
 }
 
@@ -818,7 +817,6 @@ TEST_CASE("Two-segment strokes compose virtual word from single chars", "[multi_
 
 TEST_CASE("Pinyin and stroke phases produce same candidate order", "[ordering]") {
   TestFixture f;
-  // 岁(300), 随(400), 碎(1500) — frequency sort should apply in both phases
   FakeSession session({
       {"sui", {"随", "岁", "碎"}},
   });
@@ -832,8 +830,8 @@ TEST_CASE("Pinyin and stroke phases produce same candidate order", "[ordering]")
   auto stroke_snap = machine.Snapshot();
 
   CHECK(pinyin_snap.candidates == stroke_snap.candidates);
-  CHECK(pinyin_snap.candidates[0] == "岁");
-  CHECK(pinyin_snap.candidates[1] == "随");
+  CHECK(pinyin_snap.candidates[0] == "随");
+  CHECK(pinyin_snap.candidates[1] == "岁");
   CHECK(pinyin_snap.candidates[2] == "碎");
 }
 
@@ -905,7 +903,7 @@ TEST_CASE("Comma from selecting commits selected candidate then Chinese comma", 
   machine.HandleKey('n');
   machine.HandleKey('i');
   machine.HandleKey(';');
-  machine.HandleKey('J');  // → kSelecting, index=1 (尼 after sort)
+  machine.HandleKey('J');  // → kSelecting, index=1
   auto snap = machine.HandleKey(',');
   CHECK(snap.phase == Phase::kIdle);
   // 尼 + ，
@@ -1131,7 +1129,7 @@ TEST_CASE("Partial commit returns to stroke phase with remaining pinyin", "[part
 
   for (char c : std::string("qianshan")) machine.HandleKey(c);
   machine.HandleKey(';');
-  machine.HandleKey('J');  // select index 1 = 千 (words first: 千山, then singles: 千(350), 山(400))
+  machine.HandleKey('J');  // select index 1 = 千
   auto snap = machine.HandleKey(' ');
   CHECK(snap.commit_text == "千");
   CHECK(snap.phase == Phase::kStrokeInput);

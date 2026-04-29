@@ -97,16 +97,16 @@ stateDiagram-v2
 - When multiple segments are used but Rime has no matching word, virtual word
   candidates are composed by decomposing the pinyin into syllables and combining
   the top single-character match at each position
-- Word candidates appear before frequency-sorted single characters
+- Candidate order is preserved from Rime after filtering
 - Single-character candidates are filtered by exact pinyin match against the
   input (multi-character candidates trust Rime's pinyin filtering)
-- Characters whose strokes exactly match the typed strokes rank above characters
-  with only a prefix match, regardless of frequency
+- Characters whose strokes exactly match the typed strokes are stably promoted
+  above characters with only a prefix match
 - Punctuation keys (except `;`) → commit top candidate + output Chinese punctuation
 
 ### State: SELECTING
 
-- Candidates are displayed, sorted by hanziDB frequency rank
+- Candidates are displayed in the filtered Rime order
 - Valid keys:
   - **J** → next candidate (skip 1)
   - **K** → 2nd next candidate (skip 2)

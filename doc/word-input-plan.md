@@ -88,10 +88,9 @@ second.
 ### Candidate ordering
 
 - **Pinyin phase**: trust Rime's native ordering (prioritizes words and common
-  phrases). Do not apply our single-character frequency sort.
-- **Stroke/selecting phases**: apply our frequency sort only to single-character
-  candidates. Word candidates keep Rime's ordering and appear before single
-  characters (more specific matches).
+  phrases).
+- **Stroke/selecting phases**: preserve Rime's native ordering after stroke
+  filtering. Exact stroke matches are stably promoted above prefix-only matches.
 
 ## Implementation
 
@@ -297,7 +296,7 @@ No new files needed. No new dependencies.
 |------|----------|
 | `stroke_segments_` data model + state machine `;` / backspace handling | 0.5 day |
 | `StrokeFilter::MatchesPerCharStrokes` + updated `Filter` / `NextStrokeForSegment` | 0.5 day |
-| Remove `IsSingleUtf8Char` filter; conditional frequency sort | 0.5 day |
+| Remove `IsSingleUtf8Char` filter; preserve Rime order after filtering | 0.5 day |
 | Add tests for word input and multi-`;` stroke filtering | 1 day |
 | Update README, input-flow.md, hints, preedit display | 0.5 day |
 | Manual testing with real Rime data | 0.5 day |

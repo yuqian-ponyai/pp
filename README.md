@@ -80,13 +80,17 @@ larger tasks. LLM agents should also follow all instructions in [LLM agents](#ll
 ### Prerequisites
 
 - **cmake** — for building C++ components
+- **clang++** — C++20 compiler from the distro-provided `clang` package
+- **pkg-config** — for locating `librime` and ibus development packages
 - **librime-dev** — Rime core library headers
 - **libibus-1.0-dev** — for the ibus engine (optional)
 - **Dart SDK 3.9.2+** — managed via [fvm](https://fvm.app/). Use `fvm dart` instead of `dart` directly. Used by local data-preparation scripts (see [Data preparation scripts](#data-preparation-scripts)).
 
 ```bash
 # Linux (Ubuntu/Debian) — core + ibus
-sudo apt-get install -y librime-dev librime-data-luna-pinyin librime-data-stroke \
+sudo apt-get update
+sudo apt-get install -y cmake pkg-config clang build-essential git \
+  librime-dev librime-data-luna-pinyin librime-data-stroke \
   librime-data-pinyin-simp libibus-1.0-dev
 
 # macOS — core + IMK input method
@@ -113,7 +117,7 @@ Build from the project root:
 # source env.sh is only needed for the initial configure step
 source env.sh
 # only needed the first time, or after CMakeLists.txt / CMake options change
-cmake -B build -DCMAKE_CXX_COMPILER=clang++-20 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 # normal edit/build loop
 ./scripts/build.sh
 ```
@@ -188,13 +192,16 @@ After installing via either framework, switch to Predictable Pinyin and verify:
 
 1. Type a pinyin syllable, then `;` to enter strokes, then h/s/p/d/n/z, then J/K/L/F to select.
 2. Verify the hint text, highlighted candidate, navigation, and SPACE to commit.
+   In IBus, hints should appear outside the preedit text and should not be
+   inserted into the editor when switching input methods.
 3. Type pinyin then SPACE to verify it commits the top candidate directly.
 4. Test BACKSPACE at each phase boundary.
 5. Type a multi-syllable pinyin (e.g., `zhongguo`), `;` then strokes for the first character,
    `;` again then strokes for the second character. Verify per-character narrowing.
 6. Type `,` `.` `!` `?` `:` `\` `(` `)` `[` `]` `<` `>` `~` to verify Chinese punctuation output.
 7. Type `;` from idle to verify Chinese semicolon `；` is output.
-8. Verify that candidate order is the same before and after pressing `;` (e.g., `sui` vs `sui;`).
+8. Verify that candidate order follows Rime before and after pressing `;`
+   (e.g., `sui` vs `sui;`, and `yue` keeps 月 before polyphone 说).
 9. Type `niao` → verify only single chars (鸟, 尿); type `ni'ao` → verify 尼奥 word appears.
 10. Type `shi;hs` → verify 十 (exact stroke match) ranks above 事 (prefix match).
 11. Type `qianshan;J ` → verify 千 is committed and state returns to stroke phase with `shan`.
@@ -244,8 +251,8 @@ The current unit tests cover:
   `predictable_state_machine`
 - stroke dict loading, per-character prefix filtering, multi-stroke narrowing,
   next-stroke lookup, SplitUtf8, and unknown-char handling in `stroke_filter`
-- frequency rank loading, stable sorting, and unknown-char ordering in
-  `frequency_sorter`
+- pinyin-reading validation, Rime order preservation, and polyphone ordering
+  regressions in `frequency_sorter`
 - end-to-end integration tests: full flow (pinyin → stroke → select via J →
   commit), SPACE/`;` commit shortcuts, d-as-stroke-key, pinyin prefix filtering
   during typing and exact filtering after `;`, auto-commit with single candidate,
@@ -254,9 +261,8 @@ The current unit tests cover:
   candidate label correctness in stroke/selecting phases, tone-stripping
 - word input tests: multi-char candidates from pinyin, per-character stroke
   narrowing via multiple `;`, skip-first-char (`;;`), backspace across segment
-  boundaries, word-before-single ordering in stroke phase, preedit segment
-  display, stroke hints for current character position, J/K/L/F selection among
-  word candidates
+  boundaries, Rime ordering in stroke phase, preedit segment display, stroke
+  hints for current character position, J/K/L/F selection among word candidates
 - multi-syllable pinyin tests: single-char preservation, stroke filtering,
   virtual word composition from single characters (e.g., `yuqian;ddz;ddz` →
   宇骞 even when Rime doesn't have the word)

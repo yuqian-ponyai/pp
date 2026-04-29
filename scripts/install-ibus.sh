@@ -14,7 +14,7 @@ if [[ -f "${repo_root}/env.sh" ]]; then
 fi
 
 echo "Configuring CMake build directory..."
-cmake -B build -DCMAKE_CXX_COMPILER=clang++-20 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -DCMAKE_INSTALL_PREFIX=/usr
 
 echo "Building project..."

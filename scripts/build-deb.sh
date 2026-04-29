@@ -9,7 +9,7 @@ if [[ -f "${repo_root}/env.sh" ]]; then
   source "${repo_root}/env.sh"
 fi
 
-cmake -B build -DCMAKE_CXX_COMPILER=clang++-20 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -DCMAKE_INSTALL_PREFIX=/usr
 
 "${repo_root}/scripts/build.sh"

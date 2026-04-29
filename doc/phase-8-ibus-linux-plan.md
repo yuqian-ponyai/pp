@@ -118,8 +118,8 @@ Map `StateSnapshot` fields to ibus UI calls:
 
 | Snapshot field | ibus API |
 |----------------|----------|
-| `preedit` + `stroke_buffer` + `hint` | `ibus_engine_update_preedit_text()` |
-| `hint` (standalone) | `ibus_engine_update_auxiliary_text()` |
+| `preedit` + `stroke_buffer` | `ibus_engine_update_preedit_text()` |
+| `hint` | `ibus_engine_update_auxiliary_text()` |
 | `candidates` | `ibus_engine_update_lookup_table()` with `IBusLookupTable` |
 | `selected_index` | `ibus_lookup_table_set_cursor_pos()` |
 | `candidate_labels` | `ibus_lookup_table_set_label()` per candidate |
@@ -235,7 +235,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 # Build
-[[ -d build ]] || cmake -B build -DCMAKE_CXX_COMPILER=clang++-20 \
+[[ -d build ]] || cmake -B build -DCMAKE_CXX_COMPILER=clang++ \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 ./scripts/build.sh
 

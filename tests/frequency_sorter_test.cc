@@ -6,42 +6,27 @@
 
 namespace predictable_pinyin::test {
 
-// Sample ranks from WriteSampleHanziDb():
-//   在(6) < 中(54) < 你(73) < 重(233) < 种(736) < 尼(1185)
+// Candidate order is owned by Rime. FrequencySorter supplies pinyin-reading
+// metadata for filtering and virtual candidate synthesis.
 
-TEST_CASE("FrequencySorter sorts candidates by frequency rank", "[frequency_sorter]") {
+TEST_CASE("FrequencySorter validates pinyin readings", "[frequency_sorter]") {
   const std::filesystem::path prism_path = WriteSamplePrism();
   const auto& dir = prism_path.parent_path();
   const std::filesystem::path hanzi_db_path = WriteSampleHanziDb(dir);
+  const std::filesystem::path pinyin_dict_path = WriteSamplePinyinDict(dir);
   const ScopedDirectoryCleanup cleanup(dir);
 
   FrequencySorter sorter;
   REQUIRE(sorter.LoadFromCsv(hanzi_db_path));
+  REQUIRE(sorter.LoadSupplementaryPinyin(pinyin_dict_path));
 
-  SECTION("reorders candidates by ascending frequency rank") {
-    std::vector<std::string> candidates = {"种", "中", "重"};
-    sorter.Sort(candidates);
-    REQUIRE(candidates == std::vector<std::string>{"中", "重", "种"});
-  }
-
-  SECTION("unknown characters are placed last, preserving relative order") {
-    std::vector<std::string> candidates = {"X", "中", "Y"};
-    sorter.Sort(candidates);
-    // 中(54) first, then X and Y (both unknown) in original relative order
-    CHECK(candidates[0] == "中");
-    CHECK(candidates[1] == "X");
-    CHECK(candidates[2] == "Y");
-  }
-
-  SECTION("stable sort preserves order among equal-rank candidates") {
-    std::vector<std::string> candidates = {"A", "B", "C"};
-    sorter.Sort(candidates);
-    // All unknown → all get INT_MAX rank → original order preserved
-    CHECK(candidates == std::vector<std::string>{"A", "B", "C"});
-  }
+  CHECK(sorter.MatchesPinyin("重", "zhong"));
+  CHECK(sorter.MatchesPinyin("重", "chong"));
+  CHECK(sorter.MatchesPinyin("说", "yue"));
+  CHECK_FALSE(sorter.MatchesPinyin("月", "shuo"));
 }
 
-TEST_CASE("FrequencySorter integrates with PredictableStateMachine end-to-end",
+TEST_CASE("PredictableStateMachine preserves Rime order end-to-end",
           "[frequency_sorter]") {
   const std::filesystem::path prism_path = WriteSamplePrism();
   const auto& dir = prism_path.parent_path();
@@ -49,8 +34,6 @@ TEST_CASE("FrequencySorter integrates with PredictableStateMachine end-to-end",
   const std::filesystem::path hanzi_db_path = WriteSampleHanziDb(dir);
   const ScopedDirectoryCleanup cleanup(dir);
 
-  // FakeSession returns candidates in non-frequency order for "zhong".
-  // After frequency sorting: 中(54) < 重(233) < 种(736)
   FakeSession session({
       {"z", {"在", "中"}}, {"zh", {"中"}}, {"zho", {"中"}},
       {"zhon", {"中"}}, {"zhong", {"种", "重", "中"}},
@@ -63,9 +46,33 @@ TEST_CASE("FrequencySorter integrates with PredictableStateMachine end-to-end",
 
   const StateSnapshot snapshot = machine.Snapshot();
   REQUIRE(snapshot.candidates.size() == 3);
-  CHECK(snapshot.candidates[0] == "中");
+  CHECK(snapshot.candidates[0] == "种");
   CHECK(snapshot.candidates[1] == "重");
-  CHECK(snapshot.candidates[2] == "种");
+  CHECK(snapshot.candidates[2] == "中");
+}
+
+TEST_CASE("Polyphone yue candidates keep Rime order", "[frequency_sorter]") {
+  const std::filesystem::path prism_path = WriteSamplePrism();
+  const auto& dir = prism_path.parent_path();
+  const std::filesystem::path stroke_dict_path = WriteSampleStrokeDict(dir);
+  const std::filesystem::path hanzi_db_path = WriteSampleHanziDb(dir);
+  const std::filesystem::path pinyin_dict_path = WriteSamplePinyinDict(dir);
+  const ScopedDirectoryCleanup cleanup(dir);
+
+  // 说 has a higher hanziDB frequency rank than 月, but Rime puts 月 first for
+  // "yue". The state machine should not override that order.
+  FakeSession session({
+      {"y", {"月", "说"}}, {"yu", {"月", "说"}}, {"yue", {"月", "说"}},
+  });
+  PredictableStateMachine machine(&session);
+  REQUIRE(machine.Initialize(prism_path, stroke_dict_path, hanzi_db_path,
+                             pinyin_dict_path));
+
+  for (char c : {'y', 'u', 'e'}) machine.HandleKey(c);
+  const StateSnapshot snapshot = machine.HandleKey(';');
+  REQUIRE(snapshot.candidates.size() == 2);
+  CHECK(snapshot.candidates[0] == "月");
+  CHECK(snapshot.candidates[1] == "说");
 }
 
 }  // namespace predictable_pinyin::test

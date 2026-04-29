@@ -1,14 +1,13 @@
 # Character Database (hanziDB)
 
-Research on the hanziDB.csv dataset and how it will be used for deterministic
-candidate sorting in Predictable Pinyin.
+Research on the hanziDB.csv dataset and how it is used for character metadata
+in Predictable Pinyin.
 
 ## Overview
 
-The project README specifies that candidates are sorted according to "a fixed version
-of https://github.com/ruddfawcett/hanziDB.csv". This means the candidate ordering
-is deterministic and version-locked — users can memorize the position of any character
-for a given pinyin+stroke combination.
+Predictable Pinyin now preserves Rime's candidate order after pinyin and stroke
+filtering. hanziDB remains useful for frequency metadata and primary pinyin
+readings, but it is no longer used to reorder normal Rime candidates.
 
 ## Dataset: hanziDB.csv
 
@@ -39,29 +38,27 @@ frequency_rank,character,pinyin,definition,radical,radical_code,stroke_count,hsk
 2,一,yī,"one; a, an; alone",一,1.0,1,1,0001
 ```
 
-## How Candidate Sorting Works
+## How Candidate Ordering Works
 
 The core principle of Predictable Pinyin is **deterministic ordering**: for any given
 pinyin + stroke combination, the candidate list is always in the same order. This
 lets users memorize which candidate position a character occupies and type without
 looking at the candidate list.
 
-### Sorting Algorithm
+### Ordering Algorithm
 
-1. User types pinyin → get all characters matching that pronunciation
-2. User types strokes → filter to characters whose stroke sequence matches
-3. **Sort remaining candidates by `frequency_rank`** from hanziDB
-4. Characters not in hanziDB are placed at the end (sorted by Unicode codepoint)
+1. User types pinyin → Rime returns candidates in its default order
+2. User types strokes → filter to candidates whose per-character stroke sequence matches
+3. Preserve Rime order for the remaining candidates
+4. If strokes exactly match a single character, stably promote that exact match
+   above prefix-only matches
 
-### Why "Fixed Version"
+### Why Preserve Rime Order
 
-The README says "a fixed version" of hanziDB — meaning:
-
-- The project will snapshot a specific version of the CSV at build time
-- This version is then immutable: users update the input method software but the
-  character ordering never changes
-- This is critical for the "type without looking" promise — if ordering changed
-  between versions, users' muscle memory would break
+Rime's default dictionaries already encode pinyin-specific ordering, including
+multi-reading characters (多音字). A global hanziDB frequency rank can be wrong for
+a specific pronunciation, such as putting 说 above 月 for `yue`. Preserving Rime
+order avoids that class of error while stroke filtering keeps the list predictable.
 
 ### Multi-Reading Characters
 
@@ -81,7 +78,7 @@ found for both `chen` and `shen`. The approach:
 1. `LoadFromCsv` loads the primary reading from hanziDB
 2. `LoadSupplementaryPinyin` adds additional readings from the Rime dictionary
 3. `MatchesPinyin` and `CharactersForSyllable` check all stored readings
-4. hanziDB is still the sole source for frequency ordering
+4. Rime remains the source of displayed candidate order
 
 ## Data Limitations
 
@@ -94,8 +91,8 @@ found for both `chen` and `shen`. The approach:
    ordering strategy.
 
 3. **Single pinyin per entry**: Each row has one pronunciation. The Rime pinyin
-   dictionary is the better source for pinyin→character mapping; hanziDB is only
-   used for frequency-based ordering.
+   dictionary is the better source for pinyin→character mapping, so supplementary
+   Rime readings are loaded for 多音字 support.
 
 ## Quantitative Analysis
 
@@ -148,8 +145,8 @@ would require the J/K/L/F/D candidate navigation (step 5-7 in the README).
 2. **Build a frequency lookup table**: `character → frequency_rank` as a TSV file
    for efficient runtime loading
 3. **Use Rime's pinyin dictionary** for the actual pinyin→character translation
-4. **Implement a custom C++ filter** (in a forked Rime client) to reorder candidates
-   by hanziDB frequency rank
+4. **Implement a custom C++ filter** (in a forked Rime client) to narrow candidates
+   by pinyin and strokes while preserving Rime order
 5. **Combine with stroke data** from rime-stroke to implement stroke filtering
 
 ## Alternative: Build a Custom Combined Dictionary
