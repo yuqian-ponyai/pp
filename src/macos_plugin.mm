@@ -195,6 +195,12 @@ static IMKCandidates* gCandidates = nil;
   _snapshot.~StateSnapshot();
 }
 
+// Default IMK delivery is key-down only; opt in to flagsChanged so the
+// Shift-alone toggle below is reachable.
+- (NSUInteger)recognizedEvents:(id)sender {
+  return NSEventMaskKeyDown | NSEventMaskFlagsChanged;
+}
+
 // Called by IMK for every key event while the IM is active.
 - (BOOL)handleEvent:(NSEvent*)event client:(id)sender {
   if (event.type == NSEventTypeFlagsChanged) {

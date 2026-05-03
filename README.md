@@ -45,7 +45,7 @@ Step 3-7 can be omitted if there's only one possible candidate (auto-commit).
 
 Throughout the process,
 - Ctrl+key and Alt+key combos (e.g., Ctrl+C, Ctrl+V) are passed through to the application
-- In IBus, Shift toggles between Chinese and English mode
+- Shift (pressed and released alone) toggles between Chinese and English mode on both IBus and macOS IMK
 - the user can use BACKSPACE to undo the last action
 - SPACE always commits (top candidate or the currently selected candidate)
 - Punctuation keys (`,` `.` `!` `?` `:` `\` `(` `)` `[` `]` `<` `>` `~`)
@@ -205,6 +205,9 @@ After installing via either framework, switch to Predictable Pinyin and verify:
 9. Type `niao` → verify only single chars (鸟, 尿); type `ni'ao` → verify 尼奥 word appears.
 10. Type `shi;hs` → verify 十 (exact stroke match) ranks above 事 (prefix match).
 11. Type `qianshan;J ` → verify 千 is committed and state returns to stroke phase with `shan`.
+12. Press and release Shift alone → verify CN/EN mode toggles (subsequent letters
+    type as plain ASCII in EN mode); press Shift+letter → verify the toggle does
+    NOT fire and the letter types normally.
 
 ### Testing
 
