@@ -39,6 +39,11 @@ static std::string GetEnvOrDefault(const char* name, const std::string& fallback
   return value ? std::string(value) : fallback;
 }
 
+static bool DebugLoggingEnabled() {
+  const char* value = std::getenv("PREDICTABLE_PINYIN_DEBUG");
+  return value != nullptr && value[0] != '\0' && std::strcmp(value, "0") != 0;
+}
+
 static std::string SharedSupportDir() {
   NSString* path = [[NSBundle mainBundle] sharedSupportPath];
   return std::string(path ? path.UTF8String : "");
@@ -70,7 +75,6 @@ static void EnsureRimeUserData(const std::string& user_data_dir) {
 // by the layout (e.g., `!`, `?`) maps cleanly.
 static char TranslateKey(NSEvent* event) {
   NSString* chars = [event charactersIgnoringModifiers];
-  if (chars.length == 0) return '\0';
 
   // Special keys from keyCode
   switch (event.keyCode) {
@@ -85,6 +89,38 @@ static char TranslateKey(NSEvent* event) {
       return '\b';
     default:
       break;
+  }
+
+  if (chars.length == 0) {
+    switch (event.keyCode) {
+      case 0: return 'a';
+      case 1: return 's';
+      case 2: return 'd';
+      case 3: return 'f';
+      case 4: return 'h';
+      case 5: return 'g';
+      case 6: return 'z';
+      case 7: return 'x';
+      case 8: return 'c';
+      case 9: return 'v';
+      case 11: return 'b';
+      case 12: return 'q';
+      case 13: return 'w';
+      case 14: return 'e';
+      case 15: return 'r';
+      case 16: return 'y';
+      case 17: return 't';
+      case 31: return 'o';
+      case 32: return 'u';
+      case 34: return 'i';
+      case 35: return 'p';
+      case 37: return 'l';
+      case 38: return 'j';
+      case 40: return 'k';
+      case 45: return 'n';
+      case 46: return 'm';
+      default: return '\0';
+    }
   }
 
   unichar c = [chars characterAtIndex:0];
@@ -147,9 +183,12 @@ static IMKCandidates* gCandidates = nil;
 
   _session = nullptr;
   _machine = nullptr;
-  new (&_snapshot) StateSnapshot();
   _chineseMode = YES;
   _shiftOnly = NO;
+
+  if (DebugLoggingEnabled()) {
+    NSLog(@"predictable-pinyin: controller init client=%@", inputClient);
+  }
 
   try {
     const std::string shared = GetEnvOrDefault(
@@ -192,7 +231,15 @@ static IMKCandidates* gCandidates = nil;
   _machine = nullptr;
   delete _session;
   _session = nullptr;
-  _snapshot.~StateSnapshot();
+  if (DebugLoggingEnabled()) {
+    NSLog(@"predictable-pinyin: controller dealloc");
+  }
+}
+
+// Default IMK delivery is key-down only; opt in to flagsChanged so the
+// Shift-alone toggle below is reachable.
+- (NSUInteger)recognizedEvents:(id)sender {
+  return NSEventMaskKeyDown | NSEventMaskFlagsChanged;
 }
 
 // Called by IMK for every key event while the IM is active.
@@ -211,10 +258,24 @@ static IMKCandidates* gCandidates = nil;
       NSEventModifierFlagCommand;
   if (event.modifierFlags & kBlocking) return NO;
 
-  if (!_chineseMode || _machine == nullptr) return NO;
+  if (!_chineseMode) {
+    if (DebugLoggingEnabled()) {
+      NSLog(@"predictable-pinyin: passing through key because chineseMode=NO");
+    }
+    return NO;
+  }
+  if (_machine == nullptr) {
+    NSLog(@"predictable-pinyin: passing through key because machine is null");
+    return NO;
+  }
 
   const char key = TranslateKey(event);
   if (key == '\0') {
+    if (DebugLoggingEnabled()) {
+      NSLog(@"predictable-pinyin: untranslated keyCode=%hu chars=%@ phase=%d",
+            event.keyCode, [event charactersIgnoringModifiers],
+            static_cast<int>(_snapshot.phase));
+    }
     return _snapshot.phase != Phase::kIdle;
   }
 
@@ -247,6 +308,10 @@ static IMKCandidates* gCandidates = nil;
   } else if (!shiftDown && _shiftOnly) {
     _shiftOnly = NO;
     _chineseMode = !_chineseMode;
+    if (DebugLoggingEnabled()) {
+      NSLog(@"predictable-pinyin: shift toggle chineseMode=%@",
+            _chineseMode ? @"YES" : @"NO");
+    }
     if (_machine) {
       _snapshot = _machine->Reset();
       [self updateUIWithClient:sender];
@@ -293,6 +358,9 @@ static IMKCandidates* gCandidates = nil;
 }
 
 - (void)commitComposition:(id)sender {
+  if (DebugLoggingEnabled()) {
+    NSLog(@"predictable-pinyin: commitComposition");
+  }
   if (_machine != nullptr) {
     _snapshot = _machine->Reset();
   }
@@ -305,6 +373,15 @@ static IMKCandidates* gCandidates = nil;
 // Called by IMK when the input session ends (focus lost, etc.). Without this,
 // the candidate window can persist across focus changes.
 - (void)deactivateServer:(id)sender {
+  if (DebugLoggingEnabled()) {
+    NSLog(@"predictable-pinyin: deactivateServer");
+  }
+  if (_machine != nullptr) {
+    _snapshot = _machine->Reset();
+  }
+  [sender setMarkedText:@""
+         selectionRange:NSMakeRange(0, 0)
+       replacementRange:NSMakeRange(NSNotFound, NSNotFound)];
   [gCandidates hide];
   [super deactivateServer:sender];
 }

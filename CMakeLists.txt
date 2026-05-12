@@ -67,6 +67,7 @@ add_executable(pp_core_tests
   tests/stroke_filter_test.cc
   tests/frequency_sorter_test.cc
   tests/integration_test.cc
+  tests/source_regression_test.cc
   src/frequency_sorter.cc
   src/predictable_state_machine.cc
   src/pinyin_trie.cc
@@ -75,6 +76,8 @@ add_executable(pp_core_tests
 target_include_directories(pp_core_tests PRIVATE
   "${PROJECT_SOURCE_DIR}/src"
   ${RIME_INCLUDE_DIRS})
+target_compile_definitions(pp_core_tests PRIVATE
+  PP_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 target_link_directories(pp_core_tests PRIVATE ${RIME_LIBRARY_DIRS})
 target_link_libraries(pp_core_tests PRIVATE Catch2::Catch2WithMain ${RIME_LIBRARIES})
 
