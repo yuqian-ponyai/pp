@@ -27,7 +27,9 @@ time—especially for characters buried deep in the candidate list.
    - d: 点 (dot stroke `丶`; 提/挑 rising hooks fold in here too — they're
         hard to distinguish from 点 at a glance, so we pick the easier key)
    - z: 折 (turning/hook stroke `㇠`)
-   - each candidate's label shows the **full remaining** stroke sequence
+   - each candidate's label shows the **full remaining** stroke sequence, with
+     the strokes still needed to bring it to the top (SPACE-committable)
+     CAPITALIZED and colored where supported; the top candidate stays lowercase
    - press **TAB** to autocomplete all strokes shared by the top 2 candidates
      (e.g., 努 `zphznzp` and 怒 `zphznnznn` share `zphzn` — TAB fills that in)
 4. for words, press `;` again to advance stroke matching to the next character
@@ -245,6 +247,11 @@ Run the unit tests from the project root:
 cd build
 ctest --output-on-failure
 ```
+
+Note: test discovery (`ParseAndAddCatchTests`) scans `TEST_CASE` macros at
+configure time, so after adding or renaming a test case, re-run the configure
+step (`cmake -B build ...`) once before `./scripts/build.sh`, or the new tests
+will not be registered with CTest.
 
 The current unit tests cover:
 

@@ -352,7 +352,23 @@ static IMKCandidates* gCandidates = nil;
     NSString* label = (i < _snapshot.candidate_labels.size())
         ? [NSString stringWithUTF8String:_snapshot.candidate_labels[i].c_str()]
         : @"";
-    [arr addObject:[NSString stringWithFormat:@"%@ %@", label, cand]];
+    NSString* plain = [NSString stringWithFormat:@"%@ %@", label, cand];
+    NSMutableAttributedString* attributed =
+        [[NSMutableAttributedString alloc] initWithString:plain];
+    // Color the strokes needed to bring this candidate to the top (also
+    // capitalized in the label itself, in case the panel strips attributes).
+    // Labels are ASCII, so the character count equals the UTF-16 length of
+    // the range.
+    const int highlight = (i < _snapshot.candidate_label_highlights.size())
+        ? _snapshot.candidate_label_highlights[i]
+        : 0;
+    if (highlight > 0) {
+      [attributed
+          addAttribute:NSForegroundColorAttributeName
+                 value:[NSColor systemOrangeColor]
+                 range:NSMakeRange(0, static_cast<NSUInteger>(highlight))];
+    }
+    [arr addObject:attributed];
   }
   return arr;
 }

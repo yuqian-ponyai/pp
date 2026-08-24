@@ -31,6 +31,11 @@ struct StateSnapshot {
   std::vector<int> selection_history;
   std::vector<std::string> candidates;
   std::vector<std::string> candidate_labels;
+  // Parallel to candidate_labels: number of leading label characters (additional
+  // strokes) needed to bring that candidate to the top so SPACE commits it.
+  // Those characters are also capitalized in candidate_labels. 0 means the
+  // candidate is already on top (or has no stroke label).
+  std::vector<int> candidate_label_highlights;
 };
 
 class PredictableStateMachine {
@@ -67,7 +72,11 @@ class PredictableStateMachine {
   std::string ComputeRemainingPinyin(const std::string& committed) const;
   StateSnapshot CommitWithContinuation(const std::string& committed);
   std::vector<std::string> BuildCandidateLabels(
-      const std::vector<std::string>& candidates) const;
+      const std::vector<std::string>& candidates,
+      std::vector<int>* label_highlights) const;
+  static std::vector<int> StrokesToTopLengths(
+      const std::vector<std::string>& labels,
+      const std::vector<std::string>& candidates);
   void ApplySelectionDelta(int delta);
 
   Session* session_;

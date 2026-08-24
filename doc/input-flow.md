@@ -102,6 +102,10 @@ stateDiagram-v2
   input (multi-character candidates trust Rime's pinyin filtering)
 - Characters whose strokes exactly match the typed strokes are stably promoted
   above characters with only a prefix match
+- Each candidate's label shows its full remaining stroke sequence, with the
+  strokes still needed to bring that candidate to the top (so SPACE commits
+  it) CAPITALIZED and, where the frontend supports text attributes, shown in
+  color. The top candidate's label stays lowercase
 - Punctuation keys (except `;`) → commit top candidate + output Chinese punctuation
 
 ### State: SELECTING

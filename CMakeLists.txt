@@ -82,6 +82,8 @@ target_link_directories(pp_core_tests PRIVATE ${RIME_LIBRARY_DIRS})
 target_link_libraries(pp_core_tests PRIVATE Catch2::Catch2WithMain ${RIME_LIBRARIES})
 
 if(BUILD_TESTING)
+  # NOTE: ParseAndAddCatchTests scans TEST_CASE macros at configure time, so
+  # adding or renaming a test requires re-running the cmake configure step.
   set(PARSE_CATCH_TESTS_ADD_TARGET_IN_TEST_NAME OFF)
   ParseAndAddCatchTests(pp_core_tests)
 endif()

@@ -47,6 +47,10 @@ G_DEFINE_TYPE(IBusPPEngine, ibus_pp_engine, IBUS_TYPE_ENGINE)
 // Helpers
 // ---------------------------------------------------------------------------
 
+// RGB (0xRRGGBB) for the highlighted strokes-to-top prefix in candidate
+// labels. Dark orange stays readable on both light and dark candidate windows.
+constexpr guint kStrokePrefixColor = 0xD35400;
+
 static std::string GetEnvOrDefault(const char* name, const char* fallback) {
   const char* value = std::getenv(name);
   return value ? std::string(value) : std::string(fallback);
@@ -209,6 +213,15 @@ static void ibus_pp_engine_update_ui(IBusPPEngine* pp) {
     if (i < snap.candidate_labels.size()) {
       IBusText* label =
           ibus_text_new_from_string(snap.candidate_labels[i].c_str());
+      // Color the strokes needed to bring this candidate to the top (also
+      // capitalized in the label itself, since some candidate windows ignore
+      // text attributes).
+      if (i < snap.candidate_label_highlights.size() &&
+          snap.candidate_label_highlights[i] > 0) {
+        ibus_text_append_attribute(
+            label, IBUS_ATTR_TYPE_FOREGROUND, kStrokePrefixColor, 0,
+            static_cast<guint>(snap.candidate_label_highlights[i]));
+      }
       ibus_lookup_table_set_label(pp->table, i, label);
     }
   }
