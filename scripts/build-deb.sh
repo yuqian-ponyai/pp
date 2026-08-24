@@ -24,7 +24,8 @@ cpack --config build/CPackConfig.cmake -G DEB \
   -D CPACK_COMPONENTS_GROUPING=ALL_COMPONENTS_IN_ONE \
   -D CPACK_PACKAGE_NAME=predictable-pinyin-ibus \
   -D CPACK_PACKAGE_DESCRIPTION_SUMMARY="Predictable Pinyin IBus engine for Linux" \
-  -D CPACK_DEBIAN_PACKAGE_DEPENDS="ibus, libibus-1.0-5, ${common_deps}" \
+  -D CPACK_DEBIAN_PACKAGE_DEPENDS="libibus-1.0-5, ${common_deps}" \
+  -D CPACK_DEBIAN_PACKAGE_SUGGESTS="ibus" \
   -D "CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA=${repo_root}/data/debian/postinst;${repo_root}/data/debian/postrm"
 
 # --- Self-extracting installers ---

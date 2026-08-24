@@ -31,9 +31,13 @@ echo "Installing $deb ..."
 sudo dpkg -i "$deb" || true
 sudo apt --fix-broken install -y
 
-echo "Restarting IBus daemon ..."
-ibus-daemon -drx
-sleep 2
+if command -v ibus-daemon >/dev/null 2>&1; then
+  echo "Restarting IBus daemon ..."
+  ibus-daemon -drx
+  sleep 2
+else
+  echo "warning: 'ibus-daemon' command not found; skipped IBus restart." >&2
+fi
 
 # Try adding to GNOME input sources (no-op if not on GNOME)
 if gsettings get org.gnome.desktop.input-sources sources &>/dev/null; then
@@ -53,7 +57,11 @@ if gsettings get org.gnome.desktop.input-sources sources &>/dev/null; then
 fi
 
 echo "Activating Predictable Pinyin ..."
-ibus engine predictable-pinyin 2>/dev/null || true
+if command -v ibus >/dev/null 2>&1; then
+  ibus engine predictable-pinyin 2>/dev/null || true
+else
+  echo "warning: 'ibus' command not found; activate it from Settings after IBus is available." >&2
+fi
 
 echo
 echo "Done! Predictable Pinyin is ready."

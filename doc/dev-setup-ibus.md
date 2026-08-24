@@ -9,7 +9,12 @@ This page covers only ibus-specific setup.
 sudo apt-get install -y ibus libibus-1.0-dev
 ```
 
-Verify headers: `pkg-config --cflags --libs ibus-1.0`
+`libibus-1.0-dev` is required only when building the engine from source. The
+packaged installer depends on the runtime library (`libibus-1.0-5`) and
+suggests `ibus`, but does not require the development headers on target
+machines.
+
+Verify headers for source builds: `pkg-config --cflags --libs ibus-1.0`
 
 ## Engine Model
 
