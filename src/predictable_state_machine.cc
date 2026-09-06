@@ -169,7 +169,9 @@ StateSnapshot PredictableStateMachine::Snapshot() const {
   snapshot.raw_input = rime_snapshot.input;
   snapshot.preedit = rime_snapshot.preedit;
   snapshot.candidates = CurrentCandidates();
-  snapshot.candidate_labels = BuildCandidateLabels(snapshot.candidates);
+  snapshot.candidate_labels =
+      BuildCandidateLabels(snapshot.candidates,
+                           &snapshot.candidate_label_highlights);
   return snapshot;
 }
 
@@ -405,14 +407,23 @@ std::vector<std::string> PredictableStateMachine::CurrentCandidates() const {
 }
 
 std::vector<std::string> PredictableStateMachine::BuildCandidateLabels(
-    const std::vector<std::string>& candidates) const {
+    const std::vector<std::string>& candidates,
+    std::vector<int>* label_highlights) const {
   std::vector<std::string> labels(candidates.size());
+  label_highlights->assign(candidates.size(), 0);
   if (phase_ == Phase::kPinyinInput) {
     for (auto& label : labels) label = ";";
   } else if (phase_ == Phase::kStrokeInput) {
     for (std::size_t i = 0; i < candidates.size(); ++i) {
       labels[i] = stroke_filter_.RemainingStrokesForSegment(
           candidates[i], stroke_segments_);
+    }
+    const std::vector<int> prefixes =
+        StrokesToTopLengths(labels, candidates);
+    for (std::size_t i = 0; i < labels.size(); ++i) {
+      for (int j = 0; j < prefixes[i]; ++j)
+        labels[i][j] = ToUpperAscii(labels[i][j]);
+      (*label_highlights)[i] = prefixes[i];
     }
   } else if (phase_ == Phase::kSelecting) {
     struct Nav { int delta; const char* key; };
@@ -426,6 +437,46 @@ std::vector<std::string> PredictableStateMachine::BuildCandidateLabels(
     }
   }
   return labels;
+}
+
+// For each candidate, returns how many of its leading label characters
+// (additional strokes) are needed to make it the top candidate so SPACE
+// commits it. The top candidate gets 0. A candidate above disappears once the
+// typed prefix no longer matches its strokes, and typing a single-character
+// candidate's full remaining strokes promotes it above prefix-only matches
+// (mirroring the exact-match priority in CurrentCandidates).
+std::vector<int> PredictableStateMachine::StrokesToTopLengths(
+    const std::vector<std::string>& labels,
+    const std::vector<std::string>& candidates) {
+  std::vector<int> result(labels.size(), 0);
+  for (std::size_t i = 1; i < labels.size(); ++i) {
+    const std::string& label = labels[i];
+    const bool single_char =
+        StrokeFilter::SplitUtf8(candidates[i]).size() == 1;
+    std::size_t prefix_len = label.size();
+    for (std::size_t len = 1; len <= label.size(); ++len) {
+      const std::string prefix = label.substr(0, len);
+      const bool exact = single_char && len == label.size();
+      bool reaches_top = true;
+      for (std::size_t j = 0; j < i; ++j) {
+        if (labels[j].compare(0, prefix.size(), prefix) != 0)
+          continue;  // candidate j is filtered out by this prefix
+        const bool j_also_exact =
+            exact && labels[j] == label &&
+            StrokeFilter::SplitUtf8(candidates[j]).size() == 1;
+        if (!exact || j_also_exact) {
+          reaches_top = false;
+          break;
+        }
+      }
+      if (reaches_top) {
+        prefix_len = len;
+        break;
+      }
+    }
+    result[i] = static_cast<int>(prefix_len);
+  }
+  return result;
 }
 
 bool PredictableStateMachine::IsPunctuationKey(char key) {

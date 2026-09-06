@@ -274,15 +274,65 @@ TEST_CASE("Candidate labels show full remaining strokes in stroke input phase", 
   CHECK(snap.phase == Phase::kStrokeInput);
   REQUIRE(snap.candidates.size() == 3);
   REQUIRE(snap.candidate_labels.size() == 3);
-  CHECK(snap.candidate_labels[0] == "phspnszhs");  // 种: full remaining
-  CHECK(snap.candidate_labels[1] == "phszhhhsh");  // 重: full remaining
-  CHECK(snap.candidate_labels[2] == "szhs");       // 中: full remaining
+  // The strokes needed to reach the top are capitalized: 种 is already top
+  // (lowercase), 重 needs "phsz" (种 survives "phs"), 中 needs just "s".
+  CHECK(snap.candidate_labels[0] == "phspnszhs");  // 种: top, full remaining
+  CHECK(snap.candidate_labels[1] == "PHSZhhhsh");  // 重: full remaining
+  CHECK(snap.candidate_labels[2] == "Szhs");       // 中: full remaining
+  REQUIRE(snap.candidate_label_highlights.size() == 3);
+  CHECK(snap.candidate_label_highlights[0] == 0);
+  CHECK(snap.candidate_label_highlights[1] == 4);
+  CHECK(snap.candidate_label_highlights[2] == 1);
 
   snap = machine.HandleKey('p');
   REQUIRE(snap.candidates.size() == 2);
   REQUIRE(snap.candidate_labels.size() == 2);
-  CHECK(snap.candidate_labels[0] == "hspnszhs");  // 种: remaining after "p"
-  CHECK(snap.candidate_labels[1] == "hszhhhsh");  // 重: remaining after "p"
+  CHECK(snap.candidate_labels[0] == "hspnszhs");  // 种: top after "p"
+  CHECK(snap.candidate_labels[1] == "HSZhhhsh");  // 重: remaining after "p"
+  REQUIRE(snap.candidate_label_highlights.size() == 2);
+  CHECK(snap.candidate_label_highlights[0] == 0);
+  CHECK(snap.candidate_label_highlights[1] == 3);
+}
+
+TEST_CASE("Exact-match promotion strokes are highlighted for non-top candidates",
+          "[integration]") {
+  TestFixture f;
+  // 事=hszhzhhz stays lowercase (already top). 十=hs reaches the top by typing
+  // its full "hs": exact match promotes it above the prefix match 事, so its
+  // whole label is capitalized even though "hs" prefixes 事's strokes.
+  FakeSession session({
+      {"shi", {"事", "十"}},
+  });
+  PredictableStateMachine machine(&session);
+  REQUIRE(machine.Initialize(f.prism_path, f.stroke_dict_path, f.hanzi_db_path));
+
+  for (char c : std::string("shi")) machine.HandleKey(c);
+  machine.HandleKey(';');  // → kStrokeInput
+  const auto snap = machine.Snapshot();
+  REQUIRE(snap.candidates.size() == 2);
+  CHECK(snap.candidate_labels[0] == "hszhzhhz");  // 事: top, no highlight
+  CHECK(snap.candidate_labels[1] == "HS");        // 十: full label
+  REQUIRE(snap.candidate_label_highlights.size() == 2);
+  CHECK(snap.candidate_label_highlights[0] == 0);
+  CHECK(snap.candidate_label_highlights[1] == 2);
+}
+
+TEST_CASE("Single candidate gets no highlight since it is already on top",
+          "[integration]") {
+  TestFixture f;
+  FakeSession session({
+      {"zhongguo", {"中国"}},
+  });
+  PredictableStateMachine machine(&session);
+  REQUIRE(machine.Initialize(f.prism_path, f.stroke_dict_path, f.hanzi_db_path));
+
+  for (char c : std::string("zhongguo")) machine.HandleKey(c);
+  machine.HandleKey(';');  // segment 1
+  const auto snap = machine.Snapshot();
+  REQUIRE(snap.candidates.size() == 1);
+  CHECK(snap.candidate_labels[0] == "szhs");  // unchanged, no capitalization
+  REQUIRE(snap.candidate_label_highlights.size() == 1);
+  CHECK(snap.candidate_label_highlights[0] == 0);
 }
 
 TEST_CASE("Pinyin phase shows candidates with semicolon labels", "[integration]") {
