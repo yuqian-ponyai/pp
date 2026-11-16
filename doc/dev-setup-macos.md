@@ -94,6 +94,28 @@ themselves), and `brew install librime` for the runtime.
 2. Follow the [common verification steps](../README.md#manual-verification).
 3. Verify Shift alone toggles CN/EN, and Ctrl+C / Cmd+C pass through to
    the host app.
+4. In TextEdit and VSCode/Cursor, type `zhong`, then `;`, strokes, and
+   J/K/L/F. Verify the input line contains only composition, with guidance
+   in a footer inside the candidate window. Selection destinations and the
+   highlighted row should update after each selection key, including F to
+   later pages. Candidate rows and the footer are read-only, and the window
+   ignores mouse input. Clicking must not commit a candidate.
+   Verify digits 0–9 (including the numeric keypad) do nothing during
+   composition and type normally when idle. Candidate rows should have no
+   number prefixes. Enter should commit the highlighted candidate.
+5. During composition, commit with Space, switch CN/EN with Shift, switch
+   input methods with the configured system shortcut, and move focus to
+   another app. In each case, verify candidates and their guidance disappear
+   and no instruction text is inserted into either document.
+
+The full suite described in the root README includes formatting tests and,
+on macOS, `pp_macos_ui_tests`. The latter briefly shows the combined candidate
+window and checks that candidates and footer share a window on every page,
+read-only rows, ignored mouse input, focus, screen-edge placement, and dismissal. It requires
+a logged-in macOS window server. Run just that test with
+`ctest --test-dir build -R '^macos_candidate_panel$' --output-on-failure`.
+The above manual checks still cover integration with live IMK sessions and
+host editors.
 
 ## Troubleshooting
 

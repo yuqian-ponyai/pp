@@ -68,6 +68,7 @@ add_executable(pp_core_tests
   tests/frequency_sorter_test.cc
   tests/integration_test.cc
   tests/source_regression_test.cc
+  tests/macos_presentation_test.cc
   src/frequency_sorter.cc
   src/predictable_state_machine.cc
   src/pinyin_trie.cc
@@ -159,9 +160,18 @@ if(APPLE)
     "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
     @ONLY)
 
-  add_executable(${MACOS_APP_NAME} MACOSX_BUNDLE src/macos_plugin.mm)
-  set_source_files_properties(src/macos_plugin.mm PROPERTIES
+  add_executable(${MACOS_APP_NAME} MACOSX_BUNDLE
+    src/macos_plugin.mm src/macos_candidate_panel.mm)
+  set_source_files_properties(src/macos_plugin.mm src/macos_candidate_panel.mm
+    tests/macos_candidate_panel_test.mm PROPERTIES
     COMPILE_FLAGS "-fobjc-arc")
+  add_executable(pp_macos_ui_tests
+    tests/macos_candidate_panel_test.mm src/macos_candidate_panel.mm)
+  target_include_directories(pp_macos_ui_tests PRIVATE
+    "${PROJECT_SOURCE_DIR}/src" ${RIME_INCLUDE_DIRS})
+  target_link_libraries(pp_macos_ui_tests PRIVATE
+    Catch2::Catch2WithMain ${APPKIT_FRAMEWORK})
+  add_test(NAME macos_candidate_panel COMMAND pp_macos_ui_tests)
   target_link_libraries(${MACOS_APP_NAME}
     PRIVATE pp_core
       ${INPUT_METHOD_KIT_FRAMEWORK}

@@ -194,8 +194,9 @@ After installing via either framework, switch to Predictable Pinyin and verify:
 
 1. Type a pinyin syllable, then `;` to enter strokes, then h/s/p/d/n/z, then J/K/L/F to select.
 2. Verify the hint text, highlighted candidate, navigation, and SPACE to commit.
-   In IBus, hints should appear outside the preedit text and should not be
-   inserted into the editor when switching input methods.
+   Hints should appear outside the preedit text (in the auxiliary area on IBus,
+   in the candidate window's footer on macOS) and should not be inserted into the
+   editor when switching input methods.
 3. Type pinyin then SPACE to verify it commits the top candidate directly.
 4. Test BACKSPACE at each phase boundary.
 5. Type a multi-syllable pinyin (e.g., `zhongguo`), `;` then strokes for the first character,
@@ -247,6 +248,10 @@ Run the unit tests from the project root:
 cd build
 ctest --output-on-failure
 ```
+
+On macOS the suite also briefly displays the candidate window to test its
+nonselectable hint footer and positioning; this requires a logged-in window server.
+See [macOS verification](doc/dev-setup-macos.md#manual-verification).
 
 Note: test discovery (`ParseAndAddCatchTests`) scans `TEST_CASE` macros at
 configure time, so after adding or renaming a test case, re-run the configure
