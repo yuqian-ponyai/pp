@@ -10,6 +10,8 @@ pieces so that pure logic can be tested without needing a live `librime` session
 | `main.cc` | CLI harness: parses token args, creates session + machine, prints snapshots |
 | `ibus_plugin.cc` | ibus engine: standalone executable with GObject/D-Bus bridge to the state machine; passes through Ctrl/Alt combos; Shift toggles Chinese/English mode with IBusProperty indicator |
 | `macos_plugin.mm` | macOS input method: `IMKInputController` subclass + `NSApplicationMain` bridge to the state machine (Objective-C++, ARC); key translation via `NSEvent.charactersIgnoringModifiers` + `keyCode`; passes through Ctrl/Alt/Cmd combos; Shift toggles Chinese/English mode |
+| `macos_presentation.h` | Pure formatting for macOS composition and candidate-panel guidance; keeps instructions out of marked text |
+| `macos_candidate_panel.h/.mm` | One nonactivating window for a page of candidates and a nonselectable hint footer; preserves labels and selection highlighting; ignores mouse input |
 | `pinyin_trie.h/.cc` | Loads canonical pinyin syllables from `pinyin_simp.prism.txt`; provides syllable validation (auto-end is informational only); `Decompose` splits multi-syllable pinyin into individual syllables for virtual word composition |
 | `rime_session.h/.cc` | Minimal wrapper around the `librime` C API for key input, candidate snapshots, and commits |
 | `predictable_state_machine.h/.cc` | Core state machine: pinyin → stroke → selecting phases, hints, undo/backspace; apostrophe syllable separator; exact stroke match priority; partial commit with continuation to remaining pinyin |
@@ -67,6 +69,17 @@ flowchart LR
 8. `ibus_plugin.cc` renders the resulting snapshot into the framework's preedit
    text, auxiliary hint text, and candidate list with labels. Hints are kept out
    of preedit so editors never receive hint text as committed composition.
+   On macOS, `macos_plugin.mm` likewise keeps hints outside marked text and
+   shows candidates and guidance together in `PPCandidatePanel`. A page has
+   up to ten real candidates, followed by a nonselectable footer. The footer
+   never enters candidate data, marked text, or commit text. The selected index
+   determines the visible page and highlighted row. Candidate rows are read-only
+   labels, and the window ignores mouse input. Rows show candidates and their
+   labels without number prefixes. Digits are ignored during composition
+   and pass through when idle. Return/Enter commits the current selection,
+   as does Space.
+   The window cannot take keyboard focus and is hidden on commit, focus loss,
+   and input-mode changes. Its caret-relative position is clamped to the screen.
 
 ## Tests
 
@@ -75,6 +88,8 @@ Current unit tests live in `tests/`:
 | File | Purpose |
 |------|---------|
 | `tests/pinyin_trie_test.cc` | Verifies canonical syllable loading and auto-end behavior without `librime` |
+| `tests/macos_presentation_test.cc` | Verifies marked text excludes instructions in every phase and candidate guidance follows phase/selection changes; runs without a macOS UI session |
+| `tests/macos_candidate_panel_test.mm` | AppKit window test: candidates and footer in the same window on every page, read-only rows, ignored mouse input, no focus capture, screen-edge placement, and dismissal; requires a logged-in macOS window server |
 | `tests/predictable_state_machine_test.cc` | Verifies `;`→stroke transition, J/K/L/F from stroke entering selection, d-as-stroke-key, SPACE commit, undo/backspace, and selection commit |
 | `tests/stroke_filter_test.cc` | Verifies per-character stroke filtering, `RemainingStrokesForSegment`, `SplitUtf8`, word-level matching, and integration with `PredictableStateMachine` |
 | `tests/frequency_sorter_test.cc` | Verifies pinyin-reading validation, Rime order preservation, and the `yue` polyphone ordering regression |

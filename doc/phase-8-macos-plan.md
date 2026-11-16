@@ -105,14 +105,38 @@ so downstream targets pick up Homebrew's librime prefix.
 
 ## Verification
 
-**Automated** (unchanged — `pp_core` tests are platform-neutral):
+### Candidate guidance outside the document
+
+macOS uses a single nonactivating `PPCandidatePanel` containing candidate
+rows and a nonselectable hint footer. There is no separate hint window to
+position and no fake candidate that could affect paging or commit instructions.
+`src/macos_presentation.h` separates composition formatting from compact
+phase hints; selecting reuses the state machine's dynamic destinations.
+The panel renders the selected ten-candidate page with stroke/selection labels
+and highlighted current selection, without number prefixes. Candidate rows and
+the footer are read-only labels; the window ignores mouse input. Selection and
+commit use the keyboard. Digits are ignored during composition and pass
+through normally when idle.
+Return/Enter commits the current selection. The footer never reaches marked
+text or commit text. The controller refreshes the
+entire window after state changes and hides it on commit, focus loss, and
+input-mode switches. Placement uses the client caret rectangle, clamped to
+the caret's screen; both candidates and footer always move together.
+
+`tests/macos_presentation_test.cc` checks the composition boundary for all
+phases and stale hints, plus phase/selection guidance. The macOS-only
+`pp_macos_ui_tests` target checks actual candidate-window visibility, shared
+footer containment on first/middle/last pages, read-only rows, ignored mouse
+input, focus behavior, positioning, and hiding using AppKit. Run the full suite
+below in a logged-in macOS session; check IMK placement and lifecycle using
+[macOS manual verification](./dev-setup-macos.md#manual-verification).
+
+**Automated** (core tests are platform-neutral; UI tests require macOS):
 
 ```bash
 ./scripts/build.sh
 cd build && ctest --output-on-failure
 ```
-
-76 tests pass on macOS (Apple clang, arm64).
 
 **Manual** (follows `README.md` §Manual Verification 1–11):
 

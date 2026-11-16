@@ -19,11 +19,14 @@
 #include <string>
 
 #include "predictable_state_machine.h"
+#include "macos_presentation.h"
+#import "macos_candidate_panel.h"
 
 using predictable_pinyin::Phase;
 using predictable_pinyin::PredictableStateMachine;
 using predictable_pinyin::RimeSession;
 using predictable_pinyin::StateSnapshot;
+using predictable_pinyin::BuildMacOSPreedit;
 
 static NSString* const kBundleID =
     @"im.predictablepinyin.inputmethod.PredictablePinyin";
@@ -80,7 +83,7 @@ static char TranslateKey(NSEvent* event) {
   switch (event.keyCode) {
     case 36:  // kVK_Return
     case 76:  // kVK_ANSI_KeypadEnter
-      return '\0';
+      return ' ';
     case 48:  // kVK_Tab
       return '\t';
     case 49:  // kVK_Space
@@ -137,32 +140,8 @@ static char TranslateKey(NSEvent* event) {
 }
 
 // ---------------------------------------------------------------------------
-// Preedit formatting (parity with src/ibus_plugin.cc BuildPreedit)
-// ---------------------------------------------------------------------------
-
-static std::string BuildPreedit(const StateSnapshot& snap) {
-  if (snap.phase == Phase::kIdle) return {};
-  std::string preedit =
-      snap.preedit.empty() ? snap.pinyin_buffer : snap.preedit;
-  if (snap.phase == Phase::kStrokeInput || snap.phase == Phase::kSelecting) {
-    preedit += " | ";
-    preedit += snap.stroke_buffer;
-  }
-  if (!snap.hint.empty()) {
-    preedit += "    ";
-    preedit += snap.hint;
-  }
-  return preedit;
-}
-
-// ---------------------------------------------------------------------------
 // PPInputController
 // ---------------------------------------------------------------------------
-
-// IMK candidate panel is owned by the process (one window) but driven per
-// controller. Created in main() alongside the IMKServer; the controller pulls
-// it via this accessor on demand.
-static IMKCandidates* gCandidates = nil;
 
 @interface PPInputController : IMKInputController {
   RimeSession* _session;
@@ -170,6 +149,7 @@ static IMKCandidates* gCandidates = nil;
   StateSnapshot _snapshot;
   BOOL _chineseMode;
   BOOL _shiftOnly;   // true while Shift is held with no other key since down
+  PPCandidatePanel* _candidatePanel;
 }
 @end
 
@@ -227,6 +207,7 @@ static IMKCandidates* gCandidates = nil;
 }
 
 - (void)dealloc {
+  [_candidatePanel orderOut:nil];
   delete _machine;
   _machine = nullptr;
   delete _session;
@@ -323,7 +304,7 @@ static IMKCandidates* gCandidates = nil;
 }
 
 - (void)updateUIWithClient:(id)sender {
-  const std::string preedit = BuildPreedit(_snapshot);
+  const std::string preedit = BuildMacOSPreedit(_snapshot);
   NSString* preeditStr = [NSString stringWithUTF8String:preedit.c_str()];
   NSAttributedString* attr = [[NSAttributedString alloc]
       initWithString:preeditStr ?: @""];
@@ -331,46 +312,20 @@ static IMKCandidates* gCandidates = nil;
          selectionRange:NSMakeRange(preeditStr.length, 0)
        replacementRange:NSMakeRange(NSNotFound, NSNotFound)];
 
-  // IMK only renders the candidate panel after we explicitly call
-  // updateCandidates + show; returning strings from `-candidates:` is not
-  // enough on its own.
-  if (gCandidates == nil) return;
-  if (_snapshot.candidates.empty()) {
-    [gCandidates hide];
+  if (_snapshot.phase == Phase::kIdle || _snapshot.candidates.empty()) {
+    [self hideCandidateUI];
   } else {
-    [gCandidates updateCandidates];
-    [gCandidates show:kIMKLocateCandidatesBelowHint];
+    if (!_candidatePanel) {
+      _candidatePanel = [[PPCandidatePanel alloc] init];
+    }
+    NSRect caret = NSZeroRect;
+    [sender attributesForCharacterIndex:0 lineHeightRectangle:&caret];
+    [_candidatePanel showSnapshot:_snapshot caretRect:caret];
   }
 }
 
-- (NSArray*)candidates:(id)sender {
-  NSMutableArray* arr =
-      [NSMutableArray arrayWithCapacity:_snapshot.candidates.size()];
-  for (std::size_t i = 0; i < _snapshot.candidates.size(); ++i) {
-    NSString* cand =
-        [NSString stringWithUTF8String:_snapshot.candidates[i].c_str()];
-    NSString* label = (i < _snapshot.candidate_labels.size())
-        ? [NSString stringWithUTF8String:_snapshot.candidate_labels[i].c_str()]
-        : @"";
-    NSString* plain = [NSString stringWithFormat:@"%@ %@", label, cand];
-    NSMutableAttributedString* attributed =
-        [[NSMutableAttributedString alloc] initWithString:plain];
-    // Color the strokes needed to bring this candidate to the top (also
-    // capitalized in the label itself, in case the panel strips attributes).
-    // Labels are ASCII, so the character count equals the UTF-16 length of
-    // the range.
-    const int highlight = (i < _snapshot.candidate_label_highlights.size())
-        ? _snapshot.candidate_label_highlights[i]
-        : 0;
-    if (highlight > 0) {
-      [attributed
-          addAttribute:NSForegroundColorAttributeName
-                 value:[NSColor systemOrangeColor]
-                 range:NSMakeRange(0, static_cast<NSUInteger>(highlight))];
-    }
-    [arr addObject:attributed];
-  }
-  return arr;
+- (void)hideCandidateUI {
+  [_candidatePanel orderOut:nil];
 }
 
 - (void)commitComposition:(id)sender {
@@ -383,7 +338,7 @@ static IMKCandidates* gCandidates = nil;
   [sender setMarkedText:@""
          selectionRange:NSMakeRange(0, 0)
        replacementRange:NSMakeRange(NSNotFound, NSNotFound)];
-  [gCandidates hide];
+  [self hideCandidateUI];
 }
 
 // Called by IMK when the input session ends (focus lost, etc.). Without this,
@@ -398,7 +353,7 @@ static IMKCandidates* gCandidates = nil;
   [sender setMarkedText:@""
          selectionRange:NSMakeRange(0, 0)
        replacementRange:NSMakeRange(NSNotFound, NSNotFound)];
-  [gCandidates hide];
+  [self hideCandidateUI];
   [super deactivateServer:sender];
 }
 
@@ -527,15 +482,11 @@ int main(int argc, const char* argv[]) {
     // foreground app with no windows and terminates after a few seconds —
     // which means IMK never finishes registering our connection.
     [app setActivationPolicy:NSApplicationActivationPolicyAccessory];
-    IMKServer* server = [[IMKServer alloc]
+    __attribute__((objc_precise_lifetime)) IMKServer* server = [[IMKServer alloc]
         initWithName:kConnectionName
         bundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]];
-    // One process-wide candidate panel; PPInputController drives show/hide.
-    // kIMKSingleColumnScrollingCandidatePanel renders strings vertically with
-    // 1..9 / 0 number labels — same shape the ibus engine produces.
-    gCandidates = [[IMKCandidates alloc]
-        initWithServer:server
-             panelType:kIMKSingleColumnScrollingCandidatePanel];
+    // Keep the IMK server alive while per-controller candidate windows run.
+    (void)server;
     [app run];
   }
   return 0;

@@ -24,6 +24,34 @@ struct TestFixture {
 
 // --- Edge cases ---
 
+TEST_CASE("Digits leave composition and selection unchanged without committing",
+          "[integration][digits]") {
+  TestFixture f;
+  FakeSession session({{"ni", {"你", "尼", "拟"}}});
+  PredictableStateMachine machine(&session);
+  REQUIRE(machine.Initialize(f.prism_path, f.stroke_dict_path, f.hanzi_db_path));
+  for (const auto phase : {Phase::kIdle, Phase::kPinyinInput,
+                           Phase::kStrokeInput, Phase::kSelecting}) {
+    machine.Reset();
+    if (phase != Phase::kIdle) {
+      machine.HandleKey('n');
+      machine.HandleKey('i');
+    }
+    if (phase == Phase::kStrokeInput || phase == Phase::kSelecting) machine.HandleKey(';');
+    if (phase == Phase::kSelecting) machine.HandleKey('J');
+    const auto before = machine.Snapshot();
+    for (char digit : std::string("0123456789")) {
+      const auto after = machine.HandleKey(digit);
+      CHECK(after.commit_text.empty());
+      CHECK(after.phase == before.phase);
+      CHECK(after.pinyin_buffer == before.pinyin_buffer);
+      CHECK(after.stroke_buffer == before.stroke_buffer);
+      CHECK(after.selected_index == before.selected_index);
+      CHECK(after.candidates == before.candidates);
+    }
+  }
+}
+
 TEST_CASE("Single candidate auto-commits when stroke SPACE is pressed", "[integration]") {
   TestFixture f;
   FakeSession session({{"a", {"啊"}}});
